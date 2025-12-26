@@ -3,7 +3,7 @@ server:
   base_url: http://localhost:8080
 
 database:
-  dsn: postgres://user:password@localhost:5432/family_tracker?sslmode=disable
+  dsn: postgres://family:family123@localhost:5432/family_tracker?sslmode=disable
 
 auth:
   google_client_id: your-google-client-id
