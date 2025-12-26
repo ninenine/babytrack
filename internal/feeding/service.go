@@ -2,6 +2,10 @@ package feeding
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"time"
 )
 
 type Service interface {
@@ -22,8 +26,27 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, req *CreateFeedingRequest) (*Feeding, error) {
-	// TODO: implement
-	return nil, nil
+	now := time.Now()
+
+	feeding := &Feeding{
+		ID:        generateID(),
+		ChildID:   req.ChildID,
+		Type:      req.Type,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+		Amount:    req.Amount,
+		Unit:      req.Unit,
+		Side:      req.Side,
+		Notes:     req.Notes,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := s.repo.Create(ctx, feeding); err != nil {
+		return nil, fmt.Errorf("failed to create feeding: %w", err)
+	}
+
+	return feeding, nil
 }
 
 func (s *service) Get(ctx context.Context, id string) (*Feeding, error) {
@@ -35,8 +58,28 @@ func (s *service) List(ctx context.Context, filter *FeedingFilter) ([]Feeding, e
 }
 
 func (s *service) Update(ctx context.Context, id string, req *CreateFeedingRequest) (*Feeding, error) {
-	// TODO: implement
-	return nil, nil
+	feeding, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if feeding == nil {
+		return nil, fmt.Errorf("feeding not found")
+	}
+
+	feeding.Type = req.Type
+	feeding.StartTime = req.StartTime
+	feeding.EndTime = req.EndTime
+	feeding.Amount = req.Amount
+	feeding.Unit = req.Unit
+	feeding.Side = req.Side
+	feeding.Notes = req.Notes
+	feeding.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, feeding); err != nil {
+		return nil, fmt.Errorf("failed to update feeding: %w", err)
+	}
+
+	return feeding, nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {
@@ -45,4 +88,10 @@ func (s *service) Delete(ctx context.Context, id string) error {
 
 func (s *service) GetLastFeeding(ctx context.Context, childID string) (*Feeding, error) {
 	return s.repo.GetLastFeeding(ctx, childID)
+}
+
+func generateID() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
