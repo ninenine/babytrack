@@ -1,12 +1,30 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSessionStore } from '@/stores/session.store'
+import { useFamilyStore } from '@/stores/family.store'
 import { apiClient } from '@/api/client'
+
+interface FamilyResponse {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+interface ChildResponse {
+  id: string
+  family_id: string
+  name: string
+  date_of_birth: string
+  gender?: string
+  avatar_url?: string
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { setSession, isAuthenticated } = useSessionStore()
+  const { setFamilies } = useFamilyStore()
 
   // Handle OAuth callback
   useEffect(() => {
@@ -51,6 +69,34 @@ export function LoginPage() {
         },
         token
       )
+
+      // Fetch user's families
+      try {
+        const familiesResponse = await apiClient.get<FamilyResponse[]>('/api/families')
+        const families = await Promise.all(
+          familiesResponse.data.map(async (f) => {
+            // Fetch children for each family
+            const childrenResponse = await apiClient.get<ChildResponse[]>(
+              `/api/families/${f.id}/children`
+            )
+            return {
+              id: f.id,
+              name: f.name,
+              children: childrenResponse.data.map((c) => ({
+                id: c.id,
+                name: c.name,
+                dateOfBirth: c.date_of_birth,
+                gender: c.gender,
+                avatarUrl: c.avatar_url,
+              })),
+            }
+          })
+        )
+        setFamilies(families)
+      } catch {
+        // No families yet, that's ok
+        setFamilies([])
+      }
 
       // Clear URL params and redirect
       navigate('/', { replace: true })

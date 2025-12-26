@@ -19,10 +19,8 @@ func (s *Server) setupRoutes() {
 		protected.Use(s.authMiddleware())
 		{
 			// Family routes
-			family := protected.Group("/families")
-			{
-				_ = family // TODO: wire family handlers
-			}
+			familyGroup := protected.Group("/families")
+			s.familyHandler.RegisterRoutes(familyGroup)
 
 			// Feeding routes
 			feeding := protected.Group("/feeding")

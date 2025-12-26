@@ -12,6 +12,7 @@ import (
 
 	"family-tracker/internal/auth"
 	"family-tracker/internal/db"
+	"family-tracker/internal/family"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,12 +21,13 @@ import (
 var uiFS embed.FS
 
 type Server struct {
-	cfg         *Config
-	db          *db.DB
-	router      *gin.Engine
-	httpServer  *http.Server
-	authService auth.Service
-	authHandler *auth.Handler
+	cfg           *Config
+	db            *db.DB
+	router        *gin.Engine
+	httpServer    *http.Server
+	authService   auth.Service
+	authHandler   *auth.Handler
+	familyHandler *family.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
@@ -45,12 +47,18 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	authService := auth.NewService(authRepo, googleClient, jwtManager)
 	authHandler := auth.NewHandler(authService)
 
+	// Initialize family components
+	familyRepo := family.NewRepository(database.DB)
+	familyService := family.NewService(familyRepo)
+	familyHandler := family.NewHandler(familyService)
+
 	s := &Server{
-		cfg:         cfg,
-		db:          database,
-		router:      gin.New(),
-		authService: authService,
-		authHandler: authHandler,
+		cfg:           cfg,
+		db:            database,
+		router:        gin.New(),
+		authService:   authService,
+		authHandler:   authHandler,
+		familyHandler: familyHandler,
 	}
 
 	s.setupMiddleware()
