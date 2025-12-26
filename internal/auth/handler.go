@@ -39,23 +39,23 @@ func (h *Handler) googleCallback(c *gin.Context) {
 	errorParam := c.Query("error")
 
 	if errorParam != "" {
-		c.Redirect(http.StatusTemporaryRedirect, "/?error="+errorParam)
+		c.Redirect(http.StatusTemporaryRedirect, "/login?error="+errorParam)
 		return
 	}
 
 	if code == "" || state == "" {
-		c.Redirect(http.StatusTemporaryRedirect, "/?error=missing_params")
+		c.Redirect(http.StatusTemporaryRedirect, "/login?error=missing_params")
 		return
 	}
 
 	resp, err := h.service.HandleGoogleCallback(c.Request.Context(), code, state)
 	if err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/?error=auth_failed")
+		c.Redirect(http.StatusTemporaryRedirect, "/login?error=auth_failed")
 		return
 	}
 
 	// Redirect to frontend with token
-	c.Redirect(http.StatusTemporaryRedirect, "/?token="+resp.Token)
+	c.Redirect(http.StatusTemporaryRedirect, "/login?token="+resp.Token)
 }
 
 // POST /api/auth/refresh - Refresh JWT token
