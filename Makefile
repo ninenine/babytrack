@@ -1,13 +1,14 @@
-.PHONY: help dev db-up db-down db-reset migrate build run clean
+.PHONY: help dev db-up db-down db-reset migrate build build-web run clean
 
 help:
 	@echo "Available commands:"
-	@echo "  make dev       - Start database and run server in development mode"
+	@echo "  make dev       - Build UI, start database, and run server"
 	@echo "  make db-up     - Start PostgreSQL container"
 	@echo "  make db-down   - Stop PostgreSQL container"
 	@echo "  make db-reset  - Reset database (drop and recreate)"
 	@echo "  make migrate   - Run database migrations"
-	@echo "  make build     - Build the application"
+	@echo "  make build-web - Build the web UI"
+	@echo "  make build     - Build web UI and server binary"
 	@echo "  make run       - Run the application"
 	@echo "  make clean     - Clean build artifacts"
 
@@ -26,13 +27,16 @@ db-reset:
 migrate:
 	go run ./cmd/server -migrate -config ./configs/config.yaml
 
-build:
+build-web:
+	cd web && pnpm run build
+
+build: build-web
 	./scripts/build-server.sh
 
 run:
 	go run ./cmd/server -config ./configs/config.yaml
 
-dev: db-up
+dev: db-up build-web
 	@echo "Waiting for database to be ready..."
 	@sleep 2
 	go run ./cmd/server -config ./configs/config.local.yaml
