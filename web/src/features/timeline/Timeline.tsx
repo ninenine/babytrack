@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, LocalFeeding, LocalSleep } from '@/db/dexie'
+import { db, LocalFeeding, LocalSleep, LocalMedicationLog } from '@/db/dexie'
 import { useFamilyStore } from '@/stores/family.store'
 import { apiClient } from '@/api/client'
 import { QuickAddBar } from './QuickAddBar'
 import { FeedingModal } from './FeedingModal'
+
+type MedicationLogWithName = LocalMedicationLog & { medicationName?: string }
 
 type TimelineEvent = {
   id: string
   type: 'feeding' | 'sleep' | 'medication'
   time: Date
   endTime?: Date
-  data: LocalFeeding | LocalSleep | unknown
+  data: LocalFeeding | LocalSleep | MedicationLogWithName
 }
 
 export function Timeline() {
@@ -53,6 +55,37 @@ export function Timeline() {
     [currentChild?.id, today.toDateString()]
   )
 
+  // Query today's medication logs
+  const medicationLogs = useLiveQuery(
+    () =>
+      currentChild
+        ? db.medicationLogs
+            .where('childId')
+            .equals(currentChild.id)
+            .filter((m) => m.givenAt >= today && m.givenAt < tomorrow)
+            .toArray()
+        : [],
+    [currentChild?.id, today.toDateString()]
+  )
+
+  // Query medications to get names
+  const medications = useLiveQuery(
+    () =>
+      currentChild
+        ? db.medications
+            .where('childId')
+            .equals(currentChild.id)
+            .toArray()
+        : [],
+    [currentChild?.id]
+  )
+
+  // Create a map of medication ID to name
+  const medicationNames: Record<string, string> = {}
+  medications?.forEach((med) => {
+    medicationNames[med.id] = med.name
+  })
+
   // Check for active sleep session
   useEffect(() => {
     if (sleepSessions) {
@@ -76,6 +109,12 @@ export function Timeline() {
       time: s.startTime,
       endTime: s.endTime,
       data: s,
+    })),
+    ...(medicationLogs || []).map((m) => ({
+      id: m.id,
+      type: 'medication' as const,
+      time: m.givenAt,
+      data: { ...m, medicationName: medicationNames[m.medicationId] },
     })),
   ].sort((a, b) => b.time.getTime() - a.time.getTime())
 
@@ -302,6 +341,19 @@ export function Timeline() {
                           {event.endTime
                             ? formatDuration(event.time, event.endTime)
                             : 'In progress...'}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {event.type === 'medication' && (
+                    <>
+                      <span style={styles.eventIcon}>💊</span>
+                      <div style={styles.eventDetails}>
+                        <div style={styles.eventTitle}>
+                          {(event.data as MedicationLogWithName).medicationName || 'Medication'}
+                        </div>
+                        <div style={styles.eventSubtitle}>
+                          {(event.data as MedicationLogWithName).dosage}
                         </div>
                       </div>
                     </>
