@@ -55,7 +55,6 @@ family-tracker/
 │   ├── notes/           # Notes feature
 │   ├── jobs/            # Background jobs
 │   └── sync/            # Offline sync service
-├── scripts/             # Build and utility scripts
 └── web/                 # React frontend
     ├── src/
     │   ├── app/         # App providers and routes
@@ -127,17 +126,35 @@ The Vite dev server runs on `http://localhost:5173` and proxies API requests to 
 
 ## Available Commands
 
+### Development
 | Command | Description |
 |---------|-------------|
+| `make install` | Install all dependencies (Go + web) |
 | `make dev` | Start database and run server in development mode |
+| `make dev-web` | Start Vite dev server with hot reload |
+
+### Database
+| Command | Description |
+|---------|-------------|
 | `make db-up` | Start PostgreSQL container |
 | `make db-down` | Stop PostgreSQL container |
 | `make db-reset` | Reset database (drop and recreate) |
 | `make migrate` | Run database migrations |
-| `make build-web` | Build the web UI |
+
+### Build
+| Command | Description |
+|---------|-------------|
 | `make build` | Build web UI and server binary |
-| `make run` | Run the application |
+| `make build-web` | Build only the web UI |
+| `make build-server` | Build web UI and server binary |
+| `make run` | Run the built binary |
+
+### Other
+| Command | Description |
+|---------|-------------|
 | `make clean` | Clean build artifacts |
+| `make lint` | Run linters (Go + ESLint) |
+| `make test` | Run Go tests |
 
 ## API Endpoints
 
