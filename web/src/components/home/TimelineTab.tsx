@@ -169,7 +169,7 @@ export function TimelineTab() {
       allEvents.push({
         id: `note-${note.id}`,
         type: 'note',
-        time: new Date(note.syncedAt || Date.now()),
+        time: note.syncedAt ? new Date(note.syncedAt) : new Date(0),
         title: note.title || 'Note',
         subtitle: note.content.length > 50 ? `${note.content.substring(0, 50)}...` : note.content,
         badge: note.pinned ? 'Pinned' : undefined,

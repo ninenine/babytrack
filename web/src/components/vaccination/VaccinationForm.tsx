@@ -33,6 +33,16 @@ export function VaccinationForm({ open, onOpenChange, vaccination }: Vaccination
   const [lotNumber, setLotNumber] = useState('')
   const [notes, setNotes] = useState('')
 
+  const resetForm = () => {
+    setName('')
+    setDose('1')
+    setScheduledAt(addMonths(new Date(), 1))
+    setProvider('')
+    setLocation('')
+    setLotNumber('')
+    setNotes('')
+  }
+
   useEffect(() => {
     if (vaccination) {
       setName(vaccination.name)
@@ -46,16 +56,6 @@ export function VaccinationForm({ open, onOpenChange, vaccination }: Vaccination
       resetForm()
     }
   }, [vaccination, open])
-
-  const resetForm = () => {
-    setName('')
-    setDose('1')
-    setScheduledAt(addMonths(new Date(), 1))
-    setProvider('')
-    setLocation('')
-    setLotNumber('')
-    setNotes('')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
