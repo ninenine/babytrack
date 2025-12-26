@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, LocalFeeding, LocalSleep } from '@/db/dexie'
 import { useFamilyStore } from '@/stores/family.store'
@@ -15,6 +16,7 @@ type TimelineEvent = {
 }
 
 export function Timeline() {
+  const navigate = useNavigate()
   const currentChild = useFamilyStore((state) => state.currentChild)
   const [showFeedingModal, setShowFeedingModal] = useState(false)
   const [activeSleep, setActiveSleep] = useState<LocalSleep | null>(null)
@@ -316,6 +318,7 @@ export function Timeline() {
         onFeedTap={handleQuickFeed}
         onFeedLongPress={() => setShowFeedingModal(true)}
         onSleepTap={handleSleepToggle}
+        onMedsTap={() => navigate('/medications')}
         isSleeping={!!activeSleep}
         lastFeedingType={(feedings?.[0] as LocalFeeding | undefined)?.type}
       />
