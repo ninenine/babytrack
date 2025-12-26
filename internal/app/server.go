@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"family-tracker/internal/auth"
@@ -82,17 +84,49 @@ func (s *Server) serveUI() {
 		panic(err)
 	}
 
-	// Serve static files
-	s.router.StaticFS("/assets", http.FS(subFS))
+	fileServer := http.FileServer(http.FS(subFS))
 
-	// Serve index.html for all non-API routes (SPA)
 	s.router.NoRoute(func(c *gin.Context) {
-		// Don't serve index.html for API routes
-		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
+		reqPath := c.Request.URL.Path
+
+		// Don't serve UI for API routes
+		if strings.HasPrefix(reqPath, "/api") {
 			c.JSON(404, gin.H{"error": "not found"})
 			return
 		}
 
+		// Try to serve the file directly
+		filePath := strings.TrimPrefix(reqPath, "/")
+		if filePath == "" {
+			filePath = "index.html"
+		}
+
+		// Check if file exists
+		if f, err := subFS.Open(filePath); err == nil {
+			f.Close()
+			// Set correct content type based on extension
+			ext := path.Ext(filePath)
+			switch ext {
+			case ".js":
+				c.Header("Content-Type", "application/javascript")
+			case ".css":
+				c.Header("Content-Type", "text/css")
+			case ".svg":
+				c.Header("Content-Type", "image/svg+xml")
+			case ".png":
+				c.Header("Content-Type", "image/png")
+			case ".jpg", ".jpeg":
+				c.Header("Content-Type", "image/jpeg")
+			case ".woff":
+				c.Header("Content-Type", "font/woff")
+			case ".woff2":
+				c.Header("Content-Type", "font/woff2")
+			}
+			fileServer.ServeHTTP(c.Writer, c.Request)
+			return
+		}
+
+		// File not found, serve index.html for SPA routing
 		indexFile, err := fs.ReadFile(subFS, "index.html")
 		if err != nil {
 			c.String(500, "Internal Server Error")

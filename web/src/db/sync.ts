@@ -71,9 +71,16 @@ async function markEntityAsSynced(
   }
 }
 
+interface SyncEvent {
+  type: string
+  action: string
+  entity_id: string
+  data: unknown
+}
+
 export async function pullFromServer(lastSync?: string): Promise<void> {
   try {
-    const response = await apiClient.get('/api/sync/pull', {
+    const response = await apiClient.get<{ events: SyncEvent[] }>('/api/sync/pull', {
       params: { last_sync: lastSync },
     })
 
@@ -87,12 +94,7 @@ export async function pullFromServer(lastSync?: string): Promise<void> {
   }
 }
 
-async function applyServerEvent(event: {
-  type: string
-  action: string
-  entity_id: string
-  data: unknown
-}): Promise<void> {
+async function applyServerEvent(event: SyncEvent): Promise<void> {
   const { type, action, entity_id, data } = event
 
   switch (type) {
