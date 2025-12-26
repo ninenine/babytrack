@@ -8,10 +8,12 @@ import (
 	"syscall"
 
 	"family-tracker/internal/app"
+	"family-tracker/internal/db"
 )
 
 func main() {
 	configPath := flag.String("config", "./configs/config.yaml", "path to config file")
+	migrateOnly := flag.Bool("migrate", false, "run migrations and exit")
 	flag.Parse()
 
 	cfg, err := app.LoadConfig(*configPath)
@@ -19,7 +21,26 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	srv, err := app.NewServer(cfg)
+	// Initialize database
+	database, err := db.New(cfg.Database.DSN)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer database.Close()
+
+	// Run migrations
+	log.Println("running database migrations...")
+	if err := database.Migrate(); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+	log.Println("migrations completed")
+
+	if *migrateOnly {
+		log.Println("migrate-only mode, exiting")
+		return
+	}
+
+	srv, err := app.NewServer(cfg, database)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}
