@@ -1,19 +1,44 @@
-.PHONY: help dev db-up db-down db-reset migrate build build-web run clean
+.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint test
 
+# Default target
 help:
-	@echo "Available commands:"
-	@echo "  make dev       - Build UI, start database, and run server"
-	@echo "  make db-up     - Start PostgreSQL container"
-	@echo "  make db-down   - Stop PostgreSQL container"
-	@echo "  make db-reset  - Reset database (drop and recreate)"
-	@echo "  make migrate   - Run database migrations"
-	@echo "  make build-web - Build the web UI"
-	@echo "  make build     - Build web UI and server binary"
-	@echo "  make run       - Run the application"
-	@echo "  make clean     - Clean build artifacts"
+	@echo "Family Tracker - Available commands:"
+	@echo ""
+	@echo "  Development:"
+	@echo "    make install    - Install all dependencies"
+	@echo "    make dev        - Start database and run server (development mode)"
+	@echo "    make dev-web    - Start Vite dev server with hot reload"
+	@echo ""
+	@echo "  Database:"
+	@echo "    make db-up      - Start PostgreSQL container"
+	@echo "    make db-down    - Stop PostgreSQL container"
+	@echo "    make db-reset   - Reset database (drop and recreate)"
+	@echo "    make migrate    - Run database migrations"
+	@echo ""
+	@echo "  Build:"
+	@echo "    make build      - Build web UI and server binary"
+	@echo "    make build-web  - Build only the web UI"
+	@echo "    make build-server - Build only the server binary"
+	@echo ""
+	@echo "  Other:"
+	@echo "    make run        - Run the built binary"
+	@echo "    make clean      - Clean build artifacts"
+	@echo "    make lint       - Run linters"
+	@echo "    make test       - Run tests"
 
+# Install dependencies
+install:
+	@echo "Installing Go dependencies..."
+	go mod download
+	@echo "Installing web dependencies..."
+	cd web && pnpm install
+
+# Database commands
 db-up:
 	docker compose up -d
+	@echo "Waiting for database to be ready..."
+	@sleep 2
+	@echo "Database is up"
 
 db-down:
 	docker compose down
@@ -23,25 +48,46 @@ db-reset:
 	docker compose up -d
 	@echo "Waiting for database to be ready..."
 	@sleep 3
+	@echo "Database reset complete"
 
 migrate:
 	go run ./cmd/server -migrate -config ./configs/config.local.yaml
 
+# Development
+dev: db-up
+	go run ./cmd/server -config ./configs/config.local.yaml
+
+dev-web:
+	cd web && pnpm dev
+
+# Build commands
 build-web:
 	cd web && pnpm run build
 
-build: build-web
-	./scripts/build-server.sh
+build-server: build-web
+	@echo "Building Go binary..."
+	CGO_ENABLED=0 go build -o family-tracker ./cmd/server
+	@echo "Build complete: ./family-tracker"
 
+build: build-server
+
+# Run built binary
 run:
-	go run ./cmd/server -config ./configs/config.yaml
+	./family-tracker -config ./configs/config.yaml
 
-dev: db-up
-	@echo "Waiting for database to be ready..."
-	@sleep 2
-	go run ./cmd/server -config ./configs/config.local.yaml
-
+# Clean build artifacts
 clean:
 	rm -f family-tracker server
-	rm -rf web_dist
 	rm -rf internal/app/web_dist
+	rm -rf web/node_modules/.vite
+
+# Linting
+lint:
+	@echo "Linting Go..."
+	go vet ./...
+	@echo "Linting web..."
+	cd web && pnpm lint
+
+# Tests
+test:
+	go test ./...
