@@ -1,0 +1,73 @@
+package app
+
+import "github.com/gin-gonic/gin"
+
+func (s *Server) setupRoutes() {
+	api := s.router.Group("/api")
+	{
+		// Health check
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok"})
+		})
+
+		// Auth routes (public)
+		authGroup := api.Group("/auth")
+		s.authHandler.RegisterRoutes(authGroup)
+
+		// Protected routes
+		protected := api.Group("/")
+		protected.Use(s.authMiddleware())
+		{
+			// Family routes
+			family := protected.Group("/families")
+			{
+				_ = family // TODO: wire family handlers
+			}
+
+			// Feeding routes
+			feeding := protected.Group("/feeding")
+			{
+				_ = feeding // TODO: wire feeding handlers
+			}
+
+			// Sleep routes
+			sleep := protected.Group("/sleep")
+			{
+				_ = sleep // TODO: wire sleep handlers
+			}
+
+			// Medication routes
+			medication := protected.Group("/medications")
+			{
+				_ = medication // TODO: wire medication handlers
+			}
+
+			// Vaccination routes
+			vaccination := protected.Group("/vaccinations")
+			{
+				_ = vaccination // TODO: wire vaccination handlers
+			}
+
+			// Appointment routes
+			appointment := protected.Group("/appointments")
+			{
+				_ = appointment // TODO: wire appointment handlers
+			}
+
+			// Notes routes
+			notes := protected.Group("/notes")
+			{
+				_ = notes // TODO: wire notes handlers
+			}
+
+			// Sync routes
+			sync := protected.Group("/sync")
+			{
+				_ = sync // TODO: wire sync handlers
+			}
+		}
+	}
+
+	// Serve UI for all other routes
+	s.serveUI()
+}
