@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"family-tracker/internal/auth"
+	"family-tracker/internal/db"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +19,14 @@ var uiFS embed.FS
 
 type Server struct {
 	cfg         *Config
+	db          *db.DB
 	router      *gin.Engine
 	httpServer  *http.Server
 	authService auth.Service
 	authHandler *auth.Handler
 }
 
-func NewServer(cfg *Config) (*Server, error) {
+func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Initialize auth components
@@ -36,13 +38,14 @@ func NewServer(cfg *Config) (*Server, error) {
 
 	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecret, 24*time.Hour)
 
-	// For now, use a nil repo (in-memory) - will be replaced with real DB
-	authRepo := auth.NewInMemoryRepository()
+	// Use postgres repository
+	authRepo := auth.NewPostgresRepository(database.DB)
 	authService := auth.NewService(authRepo, googleClient, jwtManager)
 	authHandler := auth.NewHandler(authService)
 
 	s := &Server{
 		cfg:         cfg,
+		db:          database,
 		router:      gin.New(),
 		authService: authService,
 		authHandler: authHandler,
