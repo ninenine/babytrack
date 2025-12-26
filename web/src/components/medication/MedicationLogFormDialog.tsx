@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DateTimePicker } from '@/components/ui/datetime-picker'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -12,8 +15,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { useUpdateMedicationLog } from '@/hooks'
 import type { LocalMedicationLog } from '@/db/dexie'
+
+const medicationLogFormSchema = z.object({
+  givenAt: z.date({ error: 'Given at is required' }),
+  givenBy: z.string().min(1, 'Given by is required'),
+  dosage: z.string().min(1, 'Dosage is required'),
+  notes: z.string().optional(),
+})
+
+type MedicationLogFormValues = z.infer<typeof medicationLogFormSchema>
 
 interface EnrichedMedicationLog extends LocalMedicationLog {
   medicationName?: string
@@ -25,36 +45,50 @@ interface MedicationLogFormDialogProps {
   log: EnrichedMedicationLog | null
 }
 
+function logToFormValues(log: LocalMedicationLog): MedicationLogFormValues {
+  return {
+    givenAt: new Date(log.givenAt),
+    givenBy: log.givenBy,
+    dosage: log.dosage,
+    notes: log.notes || '',
+  }
+}
+
 export function MedicationLogFormDialog({ open, onOpenChange, log }: MedicationLogFormDialogProps) {
   const updateLog = useUpdateMedicationLog()
 
-  const [givenAt, setGivenAt] = useState('')
-  const [givenBy, setGivenBy] = useState('')
-  const [dosage, setDosage] = useState('')
-  const [notes, setNotes] = useState('')
+  const form = useForm<MedicationLogFormValues>({
+    resolver: zodResolver(medicationLogFormSchema),
+    defaultValues: {
+      givenAt: new Date(),
+      givenBy: '',
+      dosage: '',
+      notes: '',
+    },
+  })
 
   useEffect(() => {
-    if (log) {
-      setGivenAt(format(new Date(log.givenAt), "yyyy-MM-dd'T'HH:mm"))
-      setGivenBy(log.givenBy)
-      setDosage(log.dosage)
-      setNotes(log.notes || '')
+    if (log && open) {
+      form.reset(logToFormValues(log))
     }
-  }, [log, open])
+  }, [log, open, form])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (values: MedicationLogFormValues) => {
     if (!log) return
 
-    await updateLog.mutateAsync({
-      id: log.id,
-      givenAt: new Date(givenAt),
-      givenBy,
-      dosage,
-      notes: notes || undefined,
-    })
-
-    onOpenChange(false)
+    try {
+      await updateLog.mutateAsync({
+        id: log.id,
+        givenAt: values.givenAt,
+        givenBy: values.givenBy,
+        dosage: values.dosage,
+        notes: values.notes || undefined,
+      })
+      toast.success('Medication log updated')
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update medication log')
+    }
   }
 
   if (!log) return null
@@ -69,64 +103,82 @@ export function MedicationLogFormDialog({ open, onOpenChange, log }: MedicationL
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="givenAt">Given At</Label>
-            <Input
-              id="givenAt"
-              type="datetime-local"
-              value={givenAt}
-              onChange={(e) => setGivenAt(e.target.value)}
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="givenAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Given At</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      date={field.value}
+                      onDateChange={field.onChange}
+                      placeholder="Select date and time"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="givenBy">Given By</Label>
-            <Input
-              id="givenBy"
-              placeholder="Name of person"
-              value={givenBy}
-              onChange={(e) => setGivenBy(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="givenBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Given By</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Name of person" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dosage">Dosage</Label>
-            <Input
-              id="dosage"
-              placeholder="e.g., 5ml, 1 tablet"
-              value={dosage}
-              onChange={(e) => setDosage(e.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="dosage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dosage</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 5ml, 1 tablet" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Any notes..." rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateLog.isPending || !givenBy || !dosage}>
-              {updateLog.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateLog.isPending}>
+                {updateLog.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

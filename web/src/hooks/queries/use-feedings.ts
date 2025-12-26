@@ -158,7 +158,11 @@ export function useUpdateFeeding() {
 
   return useMutation({
     mutationFn: async (input: UpdateFeedingInput) => {
-      const payload: Record<string, unknown> = {}
+      if (!currentChild) throw new Error('No child selected')
+
+      const payload: Record<string, unknown> = {
+        child_id: currentChild.id,
+      }
       if (input.type !== undefined) payload.type = input.type
       if (input.startTime !== undefined) payload.start_time = input.startTime.toISOString()
       if (input.endTime !== undefined) payload.end_time = input.endTime?.toISOString() ?? null

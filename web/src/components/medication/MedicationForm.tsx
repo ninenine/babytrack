@@ -1,8 +1,11 @@
-import { useState } from 'react'
-import { format } from 'date-fns'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -17,7 +20,27 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { useCreateMedication, type CreateMedicationInput } from '@/hooks'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { useCreateMedication } from '@/hooks'
+
+const medicationFormSchema = z.object({
+  name: z.string().min(1, 'Medication name is required'),
+  dosage: z.string().min(1, 'Dosage is required'),
+  unit: z.string(),
+  frequency: z.string(),
+  instructions: z.string().optional(),
+  startDate: z.date({ error: 'Start date is required' }),
+  endDate: z.date().optional(),
+})
+
+type MedicationFormValues = z.infer<typeof medicationFormSchema>
 
 interface MedicationFormProps {
   open: boolean
@@ -38,43 +61,48 @@ const frequencies = [
 
 const units = ['ml', 'mg', 'drops', 'tablets', 'tsp', 'tbsp']
 
+function getDefaultValues(): MedicationFormValues {
+  return {
+    name: '',
+    dosage: '',
+    unit: 'ml',
+    frequency: 'twice_daily',
+    instructions: '',
+    startDate: new Date(),
+    endDate: undefined,
+  }
+}
+
 export function MedicationForm({ open, onOpenChange }: MedicationFormProps) {
   const createMedication = useCreateMedication()
 
-  const [name, setName] = useState('')
-  const [dosage, setDosage] = useState('')
-  const [unit, setUnit] = useState('ml')
-  const [frequency, setFrequency] = useState('twice_daily')
-  const [instructions, setInstructions] = useState('')
-  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [endDate, setEndDate] = useState('')
+  const form = useForm<MedicationFormValues>({
+    resolver: zodResolver(medicationFormSchema),
+    defaultValues: getDefaultValues(),
+  })
 
-  const resetForm = () => {
-    setName('')
-    setDosage('')
-    setUnit('ml')
-    setFrequency('twice_daily')
-    setInstructions('')
-    setStartDate(format(new Date(), 'yyyy-MM-dd'))
-    setEndDate('')
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const input: CreateMedicationInput = {
-      name,
-      dosage,
-      unit,
-      frequency,
-      instructions: instructions || undefined,
-      startDate: new Date(startDate),
-      endDate: endDate ? new Date(endDate) : undefined,
+  useEffect(() => {
+    if (open) {
+      form.reset(getDefaultValues())
     }
+  }, [open, form])
 
-    await createMedication.mutateAsync(input)
-    resetForm()
-    onOpenChange(false)
+  const onSubmit = async (values: MedicationFormValues) => {
+    try {
+      await createMedication.mutateAsync({
+        name: values.name,
+        dosage: values.dosage,
+        unit: values.unit,
+        frequency: values.frequency,
+        instructions: values.instructions || undefined,
+        startDate: values.startDate,
+        endDate: values.endDate,
+      })
+      toast.success('Medication added')
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to add medication')
+    }
   }
 
   return (
@@ -84,113 +112,155 @@ export function MedicationForm({ open, onOpenChange }: MedicationFormProps) {
           <SheetTitle>Add Medication</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Medication Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g., Amoxicillin"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Medication Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Amoxicillin" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dosage">Dosage</Label>
-              <Input
-                id="dosage"
-                placeholder="e.g., 5"
-                value={dosage}
-                onChange={(e) => setDosage(e.target.value)}
-                required
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="dosage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dosage</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {units.map((u) => (
+                          <SelectItem key={u} value={u}>
+                            {u}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unit</Label>
-              <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((u) => (
-                    <SelectItem key={u} value={u}>
-                      {u}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="frequency">Frequency</Label>
-            <Select value={frequency} onValueChange={setFrequency}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {frequencies.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>
-                    {f.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date (optional)</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="instructions">Instructions</Label>
-            <Textarea
-              id="instructions"
-              placeholder="e.g., Take with food"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              rows={2}
+            <FormField
+              control={form.control}
+              name="frequency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Frequency</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {frequencies.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={createMedication.isPending}
-            >
-              {createMedication.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </form>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select start date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date (optional)</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select end date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instructions</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Take with food" rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1" disabled={createMedication.isPending}>
+                {createMedication.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   )
