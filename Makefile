@@ -1,4 +1,4 @@
-.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint test
+.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint test test-web test-all
 
 # Default target
 help:
@@ -20,11 +20,15 @@ help:
 	@echo "    make build-web  - Build only the web UI"
 	@echo "    make build-server - Build only the server binary"
 	@echo ""
+	@echo "  Testing:"
+	@echo "    make test       - Run Go tests"
+	@echo "    make test-web   - Run web tests"
+	@echo "    make test-all   - Run all tests"
+	@echo ""
 	@echo "  Other:"
 	@echo "    make run        - Run the built binary"
 	@echo "    make clean      - Clean build artifacts"
 	@echo "    make lint       - Run linters"
-	@echo "    make test       - Run tests"
 
 # Install dependencies
 install:
@@ -90,4 +94,11 @@ lint:
 
 # Tests
 test:
+	@echo "Running Go tests..."
 	go test ./...
+
+test-web:
+	@echo "Running web tests..."
+	cd web && pnpm test
+
+test-all: test test-web
