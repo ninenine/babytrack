@@ -23,10 +23,8 @@ func (s *Server) setupRoutes() {
 			s.familyHandler.RegisterRoutes(familyGroup)
 
 			// Feeding routes
-			feeding := protected.Group("/feeding")
-			{
-				_ = feeding // TODO: wire feeding handlers
-			}
+			feedingGroup := protected.Group("/feeding")
+			s.feedingHandler.RegisterRoutes(feedingGroup)
 
 			// Sleep routes
 			sleep := protected.Group("/sleep")
