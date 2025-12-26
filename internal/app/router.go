@@ -35,28 +35,20 @@ func (s *Server) setupRoutes() {
 			s.medicationHandler.RegisterRoutes(medicationGroup)
 
 			// Vaccination routes
-			vaccination := protected.Group("/vaccinations")
-			{
-				_ = vaccination // TODO: wire vaccination handlers
-			}
+			vaccinationGroup := protected.Group("/vaccinations")
+			s.vaccinationHandler.RegisterRoutes(vaccinationGroup)
 
 			// Appointment routes
-			appointment := protected.Group("/appointments")
-			{
-				_ = appointment // TODO: wire appointment handlers
-			}
+			appointmentGroup := protected.Group("/appointments")
+			s.appointmentHandler.RegisterRoutes(appointmentGroup)
 
 			// Notes routes
-			notes := protected.Group("/notes")
-			{
-				_ = notes // TODO: wire notes handlers
-			}
+			notesGroup := protected.Group("/notes")
+			s.notesHandler.RegisterRoutes(notesGroup)
 
 			// Sync routes
-			sync := protected.Group("/sync")
-			{
-				_ = sync // TODO: wire sync handlers
-			}
+			syncGroup := protected.Group("/sync")
+			s.syncHandler.RegisterRoutes(syncGroup)
 		}
 	}
 

@@ -10,12 +10,17 @@ import (
 	"strings"
 	"time"
 
+	"family-tracker/internal/appointment"
 	"family-tracker/internal/auth"
 	"family-tracker/internal/db"
 	"family-tracker/internal/family"
 	"family-tracker/internal/feeding"
+	"family-tracker/internal/jobs"
 	"family-tracker/internal/medication"
+	"family-tracker/internal/notes"
 	"family-tracker/internal/sleep"
+	"family-tracker/internal/sync"
+	"family-tracker/internal/vaccination"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,16 +29,21 @@ import (
 var uiFS embed.FS
 
 type Server struct {
-	cfg               *Config
-	db                *db.DB
-	router            *gin.Engine
-	httpServer        *http.Server
-	authService       auth.Service
-	authHandler       *auth.Handler
-	familyHandler     *family.Handler
-	feedingHandler    *feeding.Handler
-	sleepHandler      *sleep.Handler
-	medicationHandler *medication.Handler
+	cfg                  *Config
+	db                   *db.DB
+	router               *gin.Engine
+	httpServer           *http.Server
+	scheduler            *jobs.Scheduler
+	authService          auth.Service
+	authHandler          *auth.Handler
+	familyHandler        *family.Handler
+	feedingHandler       *feeding.Handler
+	sleepHandler         *sleep.Handler
+	medicationHandler    *medication.Handler
+	notesHandler         *notes.Handler
+	vaccinationHandler   *vaccination.Handler
+	appointmentHandler   *appointment.Handler
+	syncHandler          *sync.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
@@ -73,16 +83,45 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	medicationService := medication.NewService(medicationRepo)
 	medicationHandler := medication.NewHandler(medicationService)
 
+	// Initialize notes components
+	notesRepo := notes.NewRepository(database.DB)
+	notesService := notes.NewService(notesRepo)
+	notesHandler := notes.NewHandler(notesService)
+
+	// Initialize vaccination components
+	vaccinationRepo := vaccination.NewRepository(database.DB)
+	vaccinationService := vaccination.NewService(vaccinationRepo)
+	vaccinationHandler := vaccination.NewHandler(vaccinationService)
+
+	// Initialize appointment components
+	appointmentRepo := appointment.NewRepository(database.DB)
+	appointmentService := appointment.NewService(appointmentRepo)
+	appointmentHandler := appointment.NewHandler(appointmentService)
+
+	// Initialize sync components
+	syncService := sync.NewService(feedingService, sleepService, medicationService, notesService)
+	syncHandler := sync.NewHandler(syncService)
+
+	// Initialize scheduler and jobs
+	scheduler := jobs.NewScheduler()
+	scheduler.Register(jobs.NewMedicationReminderJob(medicationService))
+	scheduler.Register(jobs.NewSleepAnalyticsJob(sleepService))
+
 	s := &Server{
-		cfg:               cfg,
-		db:                database,
-		router:            gin.New(),
-		authService:       authService,
-		authHandler:       authHandler,
-		familyHandler:     familyHandler,
-		feedingHandler:    feedingHandler,
-		sleepHandler:      sleepHandler,
-		medicationHandler: medicationHandler,
+		cfg:                cfg,
+		db:                 database,
+		router:             gin.New(),
+		scheduler:          scheduler,
+		authService:        authService,
+		authHandler:        authHandler,
+		familyHandler:      familyHandler,
+		feedingHandler:     feedingHandler,
+		sleepHandler:       sleepHandler,
+		medicationHandler:  medicationHandler,
+		notesHandler:       notesHandler,
+		vaccinationHandler: vaccinationHandler,
+		appointmentHandler: appointmentHandler,
+		syncHandler:        syncHandler,
 	}
 
 	s.setupMiddleware()
@@ -100,11 +139,17 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 }
 
 func (s *Server) Start() error {
+	// Start background job scheduler
+	s.scheduler.Start()
+
 	fmt.Printf("Server starting on port %d\n", s.cfg.Server.Port)
 	return s.httpServer.ListenAndServe()
 }
 
 func (s *Server) Shutdown() error {
+	// Stop background job scheduler
+	s.scheduler.Stop()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return s.httpServer.Shutdown(ctx)

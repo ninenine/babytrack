@@ -25,7 +25,7 @@ db-reset:
 	@sleep 3
 
 migrate:
-	go run ./cmd/server -migrate -config ./configs/config.yaml
+	go run ./cmd/server -migrate -config ./configs/config.local.yaml
 
 build-web:
 	cd web && pnpm run build
@@ -36,7 +36,7 @@ build: build-web
 run:
 	go run ./cmd/server -config ./configs/config.yaml
 
-dev: db-up build-web
+dev: db-up
 	@echo "Waiting for database to be ready..."
 	@sleep 2
 	go run ./cmd/server -config ./configs/config.local.yaml

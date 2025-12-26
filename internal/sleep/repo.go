@@ -27,7 +27,7 @@ func NewRepository(db *sql.DB) Repository {
 func (r *repository) GetByID(ctx context.Context, id string) (*Sleep, error) {
 	query := `
 		SELECT id, child_id, type, start_time, end_time, quality, notes, created_at, updated_at, synced_at
-		FROM sleep
+		FROM sleep_records
 		WHERE id = $1
 	`
 
@@ -68,7 +68,7 @@ func (r *repository) GetByID(ctx context.Context, id string) (*Sleep, error) {
 func (r *repository) List(ctx context.Context, filter *SleepFilter) ([]Sleep, error) {
 	query := `
 		SELECT id, child_id, type, start_time, end_time, quality, notes, created_at, updated_at, synced_at
-		FROM sleep
+		FROM sleep_records
 		WHERE 1=1
 	`
 	args := []interface{}{}
@@ -146,7 +146,7 @@ func (r *repository) List(ctx context.Context, filter *SleepFilter) ([]Sleep, er
 
 func (r *repository) Create(ctx context.Context, sleep *Sleep) error {
 	query := `
-		INSERT INTO sleep (id, child_id, type, start_time, end_time, quality, notes, created_at, updated_at)
+		INSERT INTO sleep_records (id, child_id, type, start_time, end_time, quality, notes, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
@@ -172,7 +172,7 @@ func (r *repository) Create(ctx context.Context, sleep *Sleep) error {
 
 func (r *repository) Update(ctx context.Context, sleep *Sleep) error {
 	query := `
-		UPDATE sleep
+		UPDATE sleep_records
 		SET type = $2, start_time = $3, end_time = $4, quality = $5, notes = $6, updated_at = $7
 		WHERE id = $1
 	`
@@ -196,7 +196,7 @@ func (r *repository) Update(ctx context.Context, sleep *Sleep) error {
 }
 
 func (r *repository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM sleep WHERE id = $1`
+	query := `DELETE FROM sleep_records WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
@@ -204,7 +204,7 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 func (r *repository) GetActiveSleep(ctx context.Context, childID string) (*Sleep, error) {
 	query := `
 		SELECT id, child_id, type, start_time, end_time, quality, notes, created_at, updated_at, synced_at
-		FROM sleep
+		FROM sleep_records
 		WHERE child_id = $1 AND end_time IS NULL
 		ORDER BY start_time DESC
 		LIMIT 1

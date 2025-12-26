@@ -2,28 +2,36 @@ package sync
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
+
+	"family-tracker/internal/feeding"
+	"family-tracker/internal/medication"
+	"family-tracker/internal/notes"
+	"family-tracker/internal/sleep"
 )
 
 type EventType string
 
 const (
-	EventTypeFeeding     EventType = "feeding"
-	EventTypeSleep       EventType = "sleep"
-	EventTypeMedication  EventType = "medication"
-	EventTypeNote        EventType = "note"
-	EventTypeVaccination EventType = "vaccination"
-	EventTypeAppointment EventType = "appointment"
+	EventTypeFeeding        EventType = "feeding"
+	EventTypeSleep          EventType = "sleep"
+	EventTypeMedication     EventType = "medication"
+	EventTypeMedicationLog  EventType = "medication_log"
+	EventTypeNote           EventType = "note"
+	EventTypeVaccination    EventType = "vaccination"
+	EventTypeAppointment    EventType = "appointment"
 )
 
 type Event struct {
-	ID        string          `json:"id"`
-	Type      EventType       `json:"type"`
-	Action    string          `json:"action"` // create, update, delete
-	EntityID  string          `json:"entity_id"`
-	Data      interface{}     `json:"data,omitempty"`
-	Timestamp time.Time       `json:"timestamp"`
-	ClientID  string          `json:"client_id"`
+	ID        string      `json:"id"`
+	Type      EventType   `json:"type"`
+	Action    string      `json:"action"` // create, update, delete
+	EntityID  string      `json:"entity_id"`
+	Data      interface{} `json:"data,omitempty"`
+	Timestamp time.Time   `json:"timestamp"`
+	ClientID  string      `json:"client_id"`
 }
 
 type PushRequest struct {
@@ -32,10 +40,11 @@ type PushRequest struct {
 }
 
 type PushResponse struct {
-	Processed   int      `json:"processed"`
-	Failed      int      `json:"failed"`
-	Conflicts   []string `json:"conflicts,omitempty"`
-	ServerTime  string   `json:"server_time"`
+	Processed  int               `json:"processed"`
+	Failed     int               `json:"failed"`
+	FailedIDs  []string          `json:"failed_ids,omitempty"`
+	Results    map[string]string `json:"results,omitempty"` // eventID -> new server ID
+	ServerTime string            `json:"server_time"`
 }
 
 type PullResponse struct {
@@ -57,30 +66,233 @@ type Service interface {
 }
 
 type service struct {
-	// Add dependencies as needed
+	feedingService    feeding.Service
+	sleepService      sleep.Service
+	medicationService medication.Service
+	notesService      notes.Service
 }
 
-func NewService() Service {
-	return &service{}
+func NewService(
+	feedingService feeding.Service,
+	sleepService sleep.Service,
+	medicationService medication.Service,
+	notesService notes.Service,
+) Service {
+	return &service{
+		feedingService:    feedingService,
+		sleepService:      sleepService,
+		medicationService: medicationService,
+		notesService:      notesService,
+	}
 }
 
 func (s *service) Push(ctx context.Context, userID string, req *PushRequest) (*PushResponse, error) {
-	// TODO: implement
-	// 1. Validate events
-	// 2. Check for conflicts
-	// 3. Apply changes to database
-	// 4. Return results
-	return &PushResponse{
-		Processed:  len(req.Events),
+	resp := &PushResponse{
+		Results:    make(map[string]string),
 		ServerTime: time.Now().UTC().Format(time.RFC3339),
-	}, nil
+	}
+
+	for _, event := range req.Events {
+		err := s.processEvent(ctx, userID, &event, resp)
+		if err != nil {
+			resp.Failed++
+			resp.FailedIDs = append(resp.FailedIDs, event.ID)
+		} else {
+			resp.Processed++
+		}
+	}
+
+	return resp, nil
+}
+
+func (s *service) processEvent(ctx context.Context, userID string, event *Event, resp *PushResponse) error {
+	switch event.Type {
+	case EventTypeFeeding:
+		return s.processFeedingEvent(ctx, event, resp)
+	case EventTypeSleep:
+		return s.processSleepEvent(ctx, event, resp)
+	case EventTypeMedication:
+		return s.processMedicationEvent(ctx, event, resp)
+	case EventTypeMedicationLog:
+		return s.processMedicationLogEvent(ctx, userID, event, resp)
+	case EventTypeNote:
+		return s.processNoteEvent(ctx, userID, event, resp)
+	default:
+		return fmt.Errorf("unknown event type: %s", event.Type)
+	}
+}
+
+func (s *service) processFeedingEvent(ctx context.Context, event *Event, resp *PushResponse) error {
+	dataBytes, err := json.Marshal(event.Data)
+	if err != nil {
+		return err
+	}
+
+	switch event.Action {
+	case "create":
+		var req feeding.CreateFeedingRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		result, err := s.feedingService.Create(ctx, &req)
+		if err != nil {
+			return err
+		}
+		resp.Results[event.ID] = result.ID
+		return nil
+
+	case "update":
+		var req feeding.CreateFeedingRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		_, err := s.feedingService.Update(ctx, event.EntityID, &req)
+		return err
+
+	case "delete":
+		return s.feedingService.Delete(ctx, event.EntityID)
+
+	default:
+		return fmt.Errorf("unknown action: %s", event.Action)
+	}
+}
+
+func (s *service) processSleepEvent(ctx context.Context, event *Event, resp *PushResponse) error {
+	dataBytes, err := json.Marshal(event.Data)
+	if err != nil {
+		return err
+	}
+
+	switch event.Action {
+	case "create":
+		var req sleep.CreateSleepRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		result, err := s.sleepService.Create(ctx, &req)
+		if err != nil {
+			return err
+		}
+		resp.Results[event.ID] = result.ID
+		return nil
+
+	case "update":
+		var req sleep.CreateSleepRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		_, err := s.sleepService.Update(ctx, event.EntityID, &req)
+		return err
+
+	case "delete":
+		return s.sleepService.Delete(ctx, event.EntityID)
+
+	default:
+		return fmt.Errorf("unknown action: %s", event.Action)
+	}
+}
+
+func (s *service) processMedicationEvent(ctx context.Context, event *Event, resp *PushResponse) error {
+	dataBytes, err := json.Marshal(event.Data)
+	if err != nil {
+		return err
+	}
+
+	switch event.Action {
+	case "create":
+		var req medication.CreateMedicationRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		result, err := s.medicationService.Create(ctx, &req)
+		if err != nil {
+			return err
+		}
+		resp.Results[event.ID] = result.ID
+		return nil
+
+	case "update":
+		var req medication.CreateMedicationRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		_, err := s.medicationService.Update(ctx, event.EntityID, &req)
+		return err
+
+	case "delete":
+		return s.medicationService.Delete(ctx, event.EntityID)
+
+	case "deactivate":
+		return s.medicationService.Deactivate(ctx, event.EntityID)
+
+	default:
+		return fmt.Errorf("unknown action: %s", event.Action)
+	}
+}
+
+func (s *service) processMedicationLogEvent(ctx context.Context, userID string, event *Event, resp *PushResponse) error {
+	dataBytes, err := json.Marshal(event.Data)
+	if err != nil {
+		return err
+	}
+
+	switch event.Action {
+	case "create":
+		var req medication.LogMedicationRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		result, err := s.medicationService.LogMedication(ctx, userID, &req)
+		if err != nil {
+			return err
+		}
+		resp.Results[event.ID] = result.ID
+		return nil
+
+	default:
+		return fmt.Errorf("unknown action for medication_log: %s", event.Action)
+	}
+}
+
+func (s *service) processNoteEvent(ctx context.Context, userID string, event *Event, resp *PushResponse) error {
+	dataBytes, err := json.Marshal(event.Data)
+	if err != nil {
+		return err
+	}
+
+	switch event.Action {
+	case "create":
+		var req notes.CreateNoteRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		result, err := s.notesService.Create(ctx, userID, &req)
+		if err != nil {
+			return err
+		}
+		resp.Results[event.ID] = result.ID
+		return nil
+
+	case "update":
+		var req notes.UpdateNoteRequest
+		if err := json.Unmarshal(dataBytes, &req); err != nil {
+			return err
+		}
+		_, err := s.notesService.Update(ctx, event.EntityID, &req)
+		return err
+
+	case "delete":
+		return s.notesService.Delete(ctx, event.EntityID)
+
+	default:
+		return fmt.Errorf("unknown action for note: %s", event.Action)
+	}
 }
 
 func (s *service) Pull(ctx context.Context, userID string, lastSync string) (*PullResponse, error) {
-	// TODO: implement
-	// 1. Parse lastSync timestamp
-	// 2. Get all events since lastSync for user's families
-	// 3. Return events
+	// For now, return empty - pull sync is more complex and requires
+	// tracking server-side changes. The push-first approach handles
+	// the primary offline use case.
 	return &PullResponse{
 		Events:     []Event{},
 		ServerTime: time.Now().UTC().Format(time.RFC3339),
@@ -89,7 +301,6 @@ func (s *service) Pull(ctx context.Context, userID string, lastSync string) (*Pu
 }
 
 func (s *service) Status(ctx context.Context, userID string) (*SyncStatus, error) {
-	// TODO: implement
 	return &SyncStatus{
 		ServerTime: time.Now().UTC().Format(time.RFC3339),
 	}, nil

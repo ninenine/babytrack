@@ -2,6 +2,10 @@ package appointment
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"time"
 )
 
 type Service interface {
@@ -24,8 +28,34 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, req *CreateAppointmentRequest) (*Appointment, error) {
-	// TODO: implement
-	return nil, nil
+	now := time.Now()
+
+	duration := req.Duration
+	if duration == 0 {
+		duration = 30 // Default 30 minutes
+	}
+
+	apt := &Appointment{
+		ID:          generateID(),
+		ChildID:     req.ChildID,
+		Type:        req.Type,
+		Title:       req.Title,
+		Provider:    req.Provider,
+		Location:    req.Location,
+		ScheduledAt: req.ScheduledAt,
+		Duration:    duration,
+		Notes:       req.Notes,
+		Completed:   false,
+		Cancelled:   false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	if err := s.repo.Create(ctx, apt); err != nil {
+		return nil, fmt.Errorf("failed to create appointment: %w", err)
+	}
+
+	return apt, nil
 }
 
 func (s *service) Get(ctx context.Context, id string) (*Appointment, error) {
@@ -37,8 +67,28 @@ func (s *service) List(ctx context.Context, filter *AppointmentFilter) ([]Appoin
 }
 
 func (s *service) Update(ctx context.Context, id string, req *CreateAppointmentRequest) (*Appointment, error) {
-	// TODO: implement
-	return nil, nil
+	apt, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if apt == nil {
+		return nil, fmt.Errorf("appointment not found")
+	}
+
+	apt.Type = req.Type
+	apt.Title = req.Title
+	apt.Provider = req.Provider
+	apt.Location = req.Location
+	apt.ScheduledAt = req.ScheduledAt
+	apt.Duration = req.Duration
+	apt.Notes = req.Notes
+	apt.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, apt); err != nil {
+		return nil, fmt.Errorf("failed to update appointment: %w", err)
+	}
+
+	return apt, nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {
@@ -46,15 +96,49 @@ func (s *service) Delete(ctx context.Context, id string) error {
 }
 
 func (s *service) Complete(ctx context.Context, id string) error {
-	// TODO: implement - set completed = true
+	apt, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if apt == nil {
+		return fmt.Errorf("appointment not found")
+	}
+
+	apt.Completed = true
+	apt.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, apt); err != nil {
+		return fmt.Errorf("failed to complete appointment: %w", err)
+	}
+
 	return nil
 }
 
 func (s *service) Cancel(ctx context.Context, id string) error {
-	// TODO: implement - set cancelled = true
+	apt, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if apt == nil {
+		return fmt.Errorf("appointment not found")
+	}
+
+	apt.Cancelled = true
+	apt.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, apt); err != nil {
+		return fmt.Errorf("failed to cancel appointment: %w", err)
+	}
+
 	return nil
 }
 
 func (s *service) GetUpcoming(ctx context.Context, childID string, days int) ([]Appointment, error) {
 	return s.repo.GetUpcoming(ctx, childID, days)
+}
+
+func generateID() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }

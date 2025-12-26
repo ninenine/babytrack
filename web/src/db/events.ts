@@ -1,4 +1,4 @@
-import { db, PendingEvent } from './dexie'
+import { db, type PendingEvent } from './dexie'
 
 export async function addPendingEvent(
   type: PendingEvent['type'],
