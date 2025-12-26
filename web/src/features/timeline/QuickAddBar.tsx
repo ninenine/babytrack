@@ -4,6 +4,7 @@ interface QuickAddBarProps {
   onFeedTap: () => void
   onFeedLongPress: () => void
   onSleepTap: () => void
+  onMedsTap: () => void
   isSleeping: boolean
   lastFeedingType?: string
 }
@@ -12,6 +13,7 @@ export function QuickAddBar({
   onFeedTap,
   onFeedLongPress,
   onSleepTap,
+  onMedsTap,
   isSleeping,
   lastFeedingType,
 }: QuickAddBarProps) {
@@ -77,8 +79,8 @@ export function QuickAddBar({
           </span>
         </button>
 
-        {/* Meds Button (placeholder) */}
-        <button style={styles.button} disabled>
+        {/* Meds Button */}
+        <button style={styles.button} onClick={onMedsTap}>
           <span style={styles.buttonIcon}>💊</span>
           <span style={styles.buttonLabel}>Meds</span>
         </button>
