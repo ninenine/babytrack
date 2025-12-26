@@ -1,18 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { addMonths } from 'date-fns'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { DatePicker } from '@/components/ui/date-picker'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { useCreateVaccination, useUpdateVaccination } from '@/hooks'
 import type { LocalVaccination } from '@/db/dexie'
+
+const vaccinationFormSchema = z.object({
+  name: z.string().min(1, 'Vaccine name is required'),
+  dose: z.string().min(1, 'Dose number is required'),
+  scheduledAt: z.date({ error: 'Scheduled date is required' }),
+  provider: z.string().optional(),
+  location: z.string().optional(),
+  lotNumber: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+type VaccinationFormValues = z.infer<typeof vaccinationFormSchema>
 
 interface VaccinationFormProps {
   open: boolean
@@ -20,69 +43,80 @@ interface VaccinationFormProps {
   vaccination?: LocalVaccination | null
 }
 
+function getDefaultValues(): VaccinationFormValues {
+  return {
+    name: '',
+    dose: '1',
+    scheduledAt: addMonths(new Date(), 1),
+    provider: '',
+    location: '',
+    lotNumber: '',
+    notes: '',
+  }
+}
+
+function vaccinationToFormValues(vaccination: LocalVaccination): VaccinationFormValues {
+  return {
+    name: vaccination.name,
+    dose: vaccination.dose.toString(),
+    scheduledAt: new Date(vaccination.scheduledAt),
+    provider: vaccination.provider || '',
+    location: vaccination.location || '',
+    lotNumber: vaccination.lotNumber || '',
+    notes: vaccination.notes || '',
+  }
+}
+
 export function VaccinationForm({ open, onOpenChange, vaccination }: VaccinationFormProps) {
   const createVaccination = useCreateVaccination()
   const updateVaccination = useUpdateVaccination()
   const isEditing = !!vaccination
 
-  const [name, setName] = useState('')
-  const [dose, setDose] = useState('1')
-  const [scheduledAt, setScheduledAt] = useState<Date | undefined>(addMonths(new Date(), 1))
-  const [provider, setProvider] = useState('')
-  const [location, setLocation] = useState('')
-  const [lotNumber, setLotNumber] = useState('')
-  const [notes, setNotes] = useState('')
+  const form = useForm<VaccinationFormValues>({
+    resolver: zodResolver(vaccinationFormSchema),
+    defaultValues: getDefaultValues(),
+  })
 
-  const resetForm = () => {
-    setName('')
-    setDose('1')
-    setScheduledAt(addMonths(new Date(), 1))
-    setProvider('')
-    setLocation('')
-    setLotNumber('')
-    setNotes('')
-  }
+  // Watch for isEditing to conditionally render fields
+  const watchName = useWatch({ control: form.control, name: 'name' })
 
   useEffect(() => {
-    if (vaccination) {
-      setName(vaccination.name)
-      setDose(vaccination.dose.toString())
-      setScheduledAt(new Date(vaccination.scheduledAt))
-      setProvider(vaccination.provider || '')
-      setLocation(vaccination.location || '')
-      setLotNumber(vaccination.lotNumber || '')
-      setNotes(vaccination.notes || '')
-    } else {
-      resetForm()
+    if (open) {
+      if (vaccination) {
+        form.reset(vaccinationToFormValues(vaccination))
+      } else {
+        form.reset(getDefaultValues())
+      }
     }
-  }, [vaccination, open])
+  }, [vaccination, open, form])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!scheduledAt) return
-
-    if (isEditing && vaccination) {
-      await updateVaccination.mutateAsync({
-        id: vaccination.id,
-        name,
-        dose: parseInt(dose),
-        scheduledAt,
-        provider: provider || undefined,
-        location: location || undefined,
-        lotNumber: lotNumber || undefined,
-        notes: notes || undefined,
-      })
-    } else {
-      await createVaccination.mutateAsync({
-        name,
-        dose: parseInt(dose),
-        scheduledAt,
-        notes: notes || undefined,
-      })
+  const onSubmit = async (values: VaccinationFormValues) => {
+    try {
+      if (isEditing && vaccination) {
+        await updateVaccination.mutateAsync({
+          id: vaccination.id,
+          name: values.name,
+          dose: parseInt(values.dose),
+          scheduledAt: values.scheduledAt,
+          provider: values.provider || undefined,
+          location: values.location || undefined,
+          lotNumber: values.lotNumber || undefined,
+          notes: values.notes || undefined,
+        })
+        toast.success('Vaccination updated')
+      } else {
+        await createVaccination.mutateAsync({
+          name: values.name,
+          dose: parseInt(values.dose),
+          scheduledAt: values.scheduledAt,
+          notes: values.notes || undefined,
+        })
+        toast.success('Vaccination scheduled')
+      }
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save vaccination')
     }
-
-    resetForm()
-    onOpenChange(false)
   }
 
   const isPending = createVaccination.isPending || updateVaccination.isPending
@@ -94,103 +128,135 @@ export function VaccinationForm({ open, onOpenChange, vaccination }: Vaccination
           <SheetTitle>{isEditing ? 'Edit Vaccination' : 'Add Vaccination'}</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Vaccine Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g., DTaP, MMR, Hepatitis B"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vaccine Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., DTaP, MMR, Hepatitis B" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dose">Dose Number</Label>
-              <Input
-                id="dose"
-                type="number"
-                min="1"
-                value={dose}
-                onChange={(e) => setDose(e.target.value)}
-                required
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="dose"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dose Number</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scheduledAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Scheduled Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select date"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Scheduled Date</Label>
-              <DatePicker
-                date={scheduledAt}
-                onDateChange={setScheduledAt}
-                placeholder="Select date"
-              />
-            </div>
-          </div>
 
-          {isEditing && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="provider">Provider/Doctor</Label>
-                <Input
-                  id="provider"
-                  placeholder="Dr. Smith"
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
+            {isEditing && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="provider"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Provider/Doctor</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dr. Smith" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="Clinic name"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Clinic name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="lotNumber">Lot Number</Label>
-                <Input
-                  id="lotNumber"
-                  placeholder="Vaccine lot number"
-                  value={lotNumber}
-                  onChange={(e) => setLotNumber(e.target.value)}
+                <FormField
+                  control={form.control}
+                  name="lotNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lot Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Vaccine lot number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Any notes..." rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isPending || !scheduledAt || !name}
-            >
-              {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Save'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isPending || !watchName}
+              >
+                {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   )

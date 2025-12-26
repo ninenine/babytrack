@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { toast } from 'sonner'
 import { syncPendingEvents, pullFromServer } from '@/db/sync'
 import { getPendingEventCount } from '@/db/events'
 
@@ -17,7 +18,7 @@ export function useSync() {
     error: null,
   })
 
-  const syncPending = useCallback(async () => {
+  const syncPending = useCallback(async (showToast = false) => {
     setState((prev) => ({ ...prev, isSyncing: true, error: null }))
 
     try {
@@ -32,13 +33,25 @@ export function useSync() {
         error: failed > 0 ? `${failed} events failed to sync` : null,
       }))
 
+      if (showToast) {
+        if (synced > 0 && failed === 0) {
+          toast.success(`Synced ${synced} ${synced === 1 ? 'item' : 'items'}`)
+        } else if (failed > 0) {
+          toast.warning(`Synced ${synced}, ${failed} failed`)
+        }
+      }
+
       return { synced, failed }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Sync failed'
       setState((prev) => ({
         ...prev,
         isSyncing: false,
-        error: error instanceof Error ? error.message : 'Sync failed',
+        error: message,
       }))
+      if (showToast) {
+        toast.error(`Sync failed: ${message}`)
+      }
       throw error
     }
   }, [])

@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { format } from 'date-fns'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DateTimePicker } from '@/components/ui/datetime-picker'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -34,8 +35,8 @@ import type { LocalFeeding } from '@/db/dexie'
 // Zod schema for form validation
 const feedingFormSchema = z.object({
   type: z.enum(['breast', 'bottle', 'formula', 'solid']),
-  startTime: z.string().min(1, 'Start time is required'),
-  endTime: z.string().optional(),
+  startTime: z.date({ error: 'Start time is required' }),
+  endTime: z.date().optional(),
   amount: z.string().optional(),
   unit: z.string().optional(),
   side: z.string().optional(),
@@ -60,8 +61,8 @@ const feedingTypes: { value: FeedingType; label: string; icon: string }[] = [
 function getDefaultValues(): FeedingFormValues {
   return {
     type: 'bottle',
-    startTime: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    endTime: '',
+    startTime: new Date(),
+    endTime: undefined,
     amount: '',
     unit: 'ml',
     side: '',
@@ -72,8 +73,8 @@ function getDefaultValues(): FeedingFormValues {
 function feedingToFormValues(feeding: LocalFeeding): FeedingFormValues {
   return {
     type: feeding.type as FeedingType,
-    startTime: format(new Date(feeding.startTime), "yyyy-MM-dd'T'HH:mm"),
-    endTime: feeding.endTime ? format(new Date(feeding.endTime), "yyyy-MM-dd'T'HH:mm") : '',
+    startTime: new Date(feeding.startTime),
+    endTime: feeding.endTime ? new Date(feeding.endTime) : undefined,
     amount: feeding.amount?.toString() || '',
     unit: feeding.unit || 'ml',
     side: feeding.side || '',
@@ -107,26 +108,31 @@ export function FeedingForm({ open, onOpenChange, feeding }: FeedingFormProps) {
   const onSubmit = async (values: FeedingFormValues) => {
     const payload = {
       type: values.type,
-      startTime: new Date(values.startTime),
-      endTime: values.endTime ? new Date(values.endTime) : undefined,
+      startTime: values.startTime,
+      endTime: values.endTime,
       amount: values.amount ? parseFloat(values.amount) : undefined,
       unit: values.unit || undefined,
       side: values.side || undefined,
       notes: values.notes || undefined,
     }
 
-    if (isEditing && feeding) {
-      await updateFeeding.mutateAsync({
-        id: feeding.id,
-        ...payload,
-        endTime: payload.endTime ?? null,
-        amount: payload.amount ?? null,
-      })
-    } else {
-      await createFeeding.mutateAsync(payload)
+    try {
+      if (isEditing && feeding) {
+        await updateFeeding.mutateAsync({
+          id: feeding.id,
+          ...payload,
+          endTime: payload.endTime ?? null,
+          amount: payload.amount ?? null,
+        })
+        toast.success('Feeding updated')
+      } else {
+        await createFeeding.mutateAsync(payload)
+        toast.success('Feeding logged')
+      }
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save feeding')
     }
-
-    onOpenChange(false)
   }
 
   const isPending = createFeeding.isPending || updateFeeding.isPending
@@ -181,7 +187,11 @@ export function FeedingForm({ open, onOpenChange, feeding }: FeedingFormProps) {
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select start time"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +204,11 @@ export function FeedingForm({ open, onOpenChange, feeding }: FeedingFormProps) {
                   <FormItem>
                     <FormLabel>End Time</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        date={field.value}
+                        onDateChange={field.onChange}
+                        placeholder="Select end time"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

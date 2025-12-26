@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -10,41 +13,68 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { useCreateNote, type CreateNoteInput } from '@/hooks'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { useCreateNote } from '@/hooks'
+
+const noteFormSchema = z.object({
+  title: z.string().optional(),
+  content: z.string().min(1, 'Content is required'),
+  tags: z.string().optional(),
+  pinned: z.boolean(),
+})
+
+type NoteFormValues = z.infer<typeof noteFormSchema>
 
 interface NoteFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+function getDefaultValues(): NoteFormValues {
+  return {
+    title: '',
+    content: '',
+    tags: '',
+    pinned: false,
+  }
+}
+
 export function NoteForm({ open, onOpenChange }: NoteFormProps) {
   const createNote = useCreateNote()
 
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [tags, setTags] = useState('')
-  const [pinned, setPinned] = useState(false)
+  const form = useForm<NoteFormValues>({
+    resolver: zodResolver(noteFormSchema),
+    defaultValues: getDefaultValues(),
+  })
 
-  const resetForm = () => {
-    setTitle('')
-    setContent('')
-    setTags('')
-    setPinned(false)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const input: CreateNoteInput = {
-      title: title || undefined,
-      content,
-      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
-      pinned,
+  useEffect(() => {
+    if (open) {
+      form.reset(getDefaultValues())
     }
+  }, [open, form])
 
-    await createNote.mutateAsync(input)
-    resetForm()
-    onOpenChange(false)
+  const onSubmit = async (values: NoteFormValues) => {
+    try {
+      await createNote.mutateAsync({
+        title: values.title || undefined,
+        content: values.content,
+        tags: values.tags
+          ? values.tags.split(',').map((t) => t.trim()).filter(Boolean)
+          : undefined,
+        pinned: values.pinned,
+      })
+      toast.success('Note saved')
+      onOpenChange(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save note')
+    }
   }
 
   return (
@@ -54,66 +84,85 @@ export function NoteForm({ open, onOpenChange }: NoteFormProps) {
           <SheetTitle>Add Note</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title (optional)</Label>
-            <Input
-              id="title"
-              placeholder="Note title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Note title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
-            <Textarea
-              id="content"
-              placeholder="Write your note..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={6}
-              required
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Write your note..."
+                      rows={6}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma separated)</Label>
-            <Input
-              id="tags"
-              placeholder="e.g., health, milestone, feeding"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags (comma separated)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., health, milestone, feeding" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex items-center justify-between">
-            <Label htmlFor="pinned">Pin this note</Label>
-            <Switch
-              id="pinned"
-              checked={pinned}
-              onCheckedChange={setPinned}
+            <FormField
+              control={form.control}
+              name="pinned"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <FormLabel>Pin this note</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={createNote.isPending}
-            >
-              {createNote.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1" disabled={createNote.isPending}>
+                {createNote.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   )
