@@ -2,10 +2,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSessionStore } from '@/stores/session.store'
 import { useFamilyStore } from '@/stores/family.store'
 
-// Feature components
+// Components
+import { Layout } from '@/components/Layout'
 import { LoginPage } from '@/features/auth'
 import { OnboardingPage } from '@/features/onboarding'
-import { Dashboard } from '@/features/dashboard'
+import { Timeline } from '@/features/timeline'
 import { FeedingList } from '@/features/feeding'
 import { SleepList } from '@/features/sleep'
 import { MedicationList } from '@/features/medication'
@@ -50,52 +51,53 @@ export function AppRoutes() {
         }
       />
 
+      {/* App routes with bottom navigation */}
       <Route
-        path="/"
         element={
           <RequireFamilyRoute>
-            <Dashboard />
+            <Layout />
           </RequireFamilyRoute>
         }
-      />
-
-      <Route
-        path="/feeding"
-        element={
-          <RequireFamilyRoute>
-            <FeedingList />
-          </RequireFamilyRoute>
-        }
-      />
-
-      <Route
-        path="/sleep"
-        element={
-          <RequireFamilyRoute>
-            <SleepList />
-          </RequireFamilyRoute>
-        }
-      />
-
-      <Route
-        path="/medications"
-        element={
-          <RequireFamilyRoute>
-            <MedicationList />
-          </RequireFamilyRoute>
-        }
-      />
-
-      <Route
-        path="/notes"
-        element={
-          <RequireFamilyRoute>
-            <NotesList />
-          </RequireFamilyRoute>
-        }
-      />
+      >
+        <Route index element={<Timeline />} />
+        <Route path="feeding" element={<FeedingList />} />
+        <Route path="sleep" element={<SleepList />} />
+        <Route path="history" element={<HistoryPlaceholder />} />
+        <Route path="health" element={<HealthPlaceholder />} />
+        <Route path="medications" element={<MedicationList />} />
+        <Route path="notes" element={<NotesList />} />
+        <Route path="settings" element={<SettingsPlaceholder />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  )
+}
+
+// Placeholder components
+function HistoryPlaceholder() {
+  return (
+    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+      <h2>History</h2>
+      <p>Coming soon...</p>
+    </div>
+  )
+}
+
+function HealthPlaceholder() {
+  return (
+    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+      <h2>Health</h2>
+      <p>Medications, vaccinations, and growth tracking coming soon...</p>
+    </div>
+  )
+}
+
+function SettingsPlaceholder() {
+  return (
+    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+      <h2>Settings</h2>
+      <p>Account and preferences coming soon...</p>
+    </div>
   )
 }

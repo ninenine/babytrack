@@ -14,6 +14,7 @@ import (
 	"family-tracker/internal/db"
 	"family-tracker/internal/family"
 	"family-tracker/internal/feeding"
+	"family-tracker/internal/sleep"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,7 @@ type Server struct {
 	authHandler    *auth.Handler
 	familyHandler  *family.Handler
 	feedingHandler *feeding.Handler
+	sleepHandler   *sleep.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
@@ -59,6 +61,11 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	feedingService := feeding.NewService(feedingRepo)
 	feedingHandler := feeding.NewHandler(feedingService)
 
+	// Initialize sleep components
+	sleepRepo := sleep.NewRepository(database.DB)
+	sleepService := sleep.NewService(sleepRepo)
+	sleepHandler := sleep.NewHandler(sleepService)
+
 	s := &Server{
 		cfg:            cfg,
 		db:             database,
@@ -67,6 +74,7 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 		authHandler:    authHandler,
 		familyHandler:  familyHandler,
 		feedingHandler: feedingHandler,
+		sleepHandler:   sleepHandler,
 	}
 
 	s.setupMiddleware()
