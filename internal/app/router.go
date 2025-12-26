@@ -31,10 +31,8 @@ func (s *Server) setupRoutes() {
 			s.sleepHandler.RegisterRoutes(sleepGroup)
 
 			// Medication routes
-			medication := protected.Group("/medications")
-			{
-				_ = medication // TODO: wire medication handlers
-			}
+			medicationGroup := protected.Group("/medications")
+			s.medicationHandler.RegisterRoutes(medicationGroup)
 
 			// Vaccination routes
 			vaccination := protected.Group("/vaccinations")

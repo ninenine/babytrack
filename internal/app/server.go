@@ -14,6 +14,7 @@ import (
 	"family-tracker/internal/db"
 	"family-tracker/internal/family"
 	"family-tracker/internal/feeding"
+	"family-tracker/internal/medication"
 	"family-tracker/internal/sleep"
 
 	"github.com/gin-gonic/gin"
@@ -23,15 +24,16 @@ import (
 var uiFS embed.FS
 
 type Server struct {
-	cfg            *Config
-	db             *db.DB
-	router         *gin.Engine
-	httpServer     *http.Server
-	authService    auth.Service
-	authHandler    *auth.Handler
-	familyHandler  *family.Handler
-	feedingHandler *feeding.Handler
-	sleepHandler   *sleep.Handler
+	cfg               *Config
+	db                *db.DB
+	router            *gin.Engine
+	httpServer        *http.Server
+	authService       auth.Service
+	authHandler       *auth.Handler
+	familyHandler     *family.Handler
+	feedingHandler    *feeding.Handler
+	sleepHandler      *sleep.Handler
+	medicationHandler *medication.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
@@ -66,15 +68,21 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	sleepService := sleep.NewService(sleepRepo)
 	sleepHandler := sleep.NewHandler(sleepService)
 
+	// Initialize medication components
+	medicationRepo := medication.NewRepository(database.DB)
+	medicationService := medication.NewService(medicationRepo)
+	medicationHandler := medication.NewHandler(medicationService)
+
 	s := &Server{
-		cfg:            cfg,
-		db:             database,
-		router:         gin.New(),
-		authService:    authService,
-		authHandler:    authHandler,
-		familyHandler:  familyHandler,
-		feedingHandler: feedingHandler,
-		sleepHandler:   sleepHandler,
+		cfg:               cfg,
+		db:                database,
+		router:            gin.New(),
+		authService:       authService,
+		authHandler:       authHandler,
+		familyHandler:     familyHandler,
+		feedingHandler:    feedingHandler,
+		sleepHandler:      sleepHandler,
+		medicationHandler: medicationHandler,
 	}
 
 	s.setupMiddleware()
