@@ -35,9 +35,9 @@ run:
 dev: db-up
 	@echo "Waiting for database to be ready..."
 	@sleep 2
-	go run ./cmd/server -config ./configs/config.yaml
+	go run ./cmd/server -config ./configs/config.local.yaml
 
 clean:
-	rm -f family-tracker
+	rm -f family-tracker server
 	rm -rf web_dist
 	rm -rf internal/app/web_dist

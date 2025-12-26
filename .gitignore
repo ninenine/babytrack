@@ -1,5 +1,6 @@
 # Binary
 family-tracker
+server
 
 # Build output
 web_dist/
@@ -27,5 +28,5 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Config with secrets (keep sample)
+# Config with secrets (use config.yaml as base, override with config.local.yaml)
 configs/config.local.yaml
