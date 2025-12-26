@@ -1,0 +1,31 @@
+# Binary
+family-tracker
+
+# Build output
+web_dist/
+internal/app/web_dist/
+
+# Dependencies
+web/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Config with secrets (keep sample)
+configs/config.local.yaml
