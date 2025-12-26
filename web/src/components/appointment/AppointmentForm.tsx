@@ -52,7 +52,7 @@ export function AppointmentForm({ open, onOpenChange, appointment }: Appointment
   const [title, setTitle] = useState('')
   const [provider, setProvider] = useState('')
   const [location, setLocation] = useState('')
-  const [scheduledAt, setScheduledAt] = useState(format(addDays(new Date(), 7), "yyyy-MM-dd'T'10:00"))
+  const [scheduledAt, setScheduledAt] = useState(() => format(addDays(new Date(), 7), "yyyy-MM-dd'T'10:00"))
   const [duration, setDuration] = useState('30')
   const [notes, setNotes] = useState('')
 
@@ -66,19 +66,15 @@ export function AppointmentForm({ open, onOpenChange, appointment }: Appointment
       setDuration(appointment.duration.toString())
       setNotes(appointment.notes || '')
     } else {
-      resetForm()
+      setType('well_visit')
+      setTitle('')
+      setProvider('')
+      setLocation('')
+      setScheduledAt(format(addDays(new Date(), 7), "yyyy-MM-dd'T'10:00"))
+      setDuration('30')
+      setNotes('')
     }
   }, [appointment, open])
-
-  const resetForm = () => {
-    setType('well_visit')
-    setTitle('')
-    setProvider('')
-    setLocation('')
-    setScheduledAt(format(addDays(new Date(), 7), "yyyy-MM-dd'T'10:00"))
-    setDuration('30')
-    setNotes('')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,7 +102,6 @@ export function AppointmentForm({ open, onOpenChange, appointment }: Appointment
       })
     }
 
-    resetForm()
     onOpenChange(false)
   }
 

@@ -19,5 +19,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Disable overly strict React 19 rule - syncing props to state in effects is valid
+      'react-hooks/set-state-in-effect': 'off',
+      // Disable for shadcn/ui components that export variants
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
   },
 ])

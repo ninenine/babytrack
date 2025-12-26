@@ -47,6 +47,16 @@ export function FeedingForm({ open, onOpenChange, feeding }: FeedingFormProps) {
   const [side, setSide] = useState('')
   const [notes, setNotes] = useState('')
 
+  const resetForm = () => {
+    setType('bottle')
+    setStartTime(format(new Date(), "yyyy-MM-dd'T'HH:mm"))
+    setEndTime('')
+    setAmount('')
+    setUnit('ml')
+    setSide('')
+    setNotes('')
+  }
+
   useEffect(() => {
     if (feeding) {
       setType(feeding.type as FeedingType)
@@ -60,16 +70,6 @@ export function FeedingForm({ open, onOpenChange, feeding }: FeedingFormProps) {
       resetForm()
     }
   }, [feeding, open])
-
-  const resetForm = () => {
-    setType('bottle')
-    setStartTime(format(new Date(), "yyyy-MM-dd'T'HH:mm"))
-    setEndTime('')
-    setAmount('')
-    setUnit('ml')
-    setSide('')
-    setNotes('')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
