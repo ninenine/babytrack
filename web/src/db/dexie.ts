@@ -1,4 +1,4 @@
-import Dexie, { Table } from 'dexie'
+import Dexie, { type Table } from 'dexie'
 
 export interface LocalFeeding {
   id: string
@@ -65,9 +65,41 @@ export interface LocalNote {
   pendingSync: boolean
 }
 
+export interface LocalVaccination {
+  id: string
+  childId: string
+  name: string
+  dose: number
+  scheduledAt: Date
+  administeredAt?: Date
+  provider?: string
+  location?: string
+  lotNumber?: string
+  notes?: string
+  completed: boolean
+  syncedAt?: Date
+  pendingSync: boolean
+}
+
+export interface LocalAppointment {
+  id: string
+  childId: string
+  type: 'well_visit' | 'sick_visit' | 'specialist' | 'dental' | 'other'
+  title: string
+  provider?: string
+  location?: string
+  scheduledAt: Date
+  duration: number
+  notes?: string
+  completed: boolean
+  cancelled: boolean
+  syncedAt?: Date
+  pendingSync: boolean
+}
+
 export interface PendingEvent {
   id: string
-  type: 'feeding' | 'sleep' | 'medication' | 'note'
+  type: 'feeding' | 'sleep' | 'medication' | 'medication_log' | 'note' | 'vaccination' | 'appointment'
   action: 'create' | 'update' | 'delete'
   entityId: string
   data?: unknown
@@ -81,6 +113,8 @@ class FamilyTrackerDB extends Dexie {
   medications!: Table<LocalMedication>
   medicationLogs!: Table<LocalMedicationLog>
   notes!: Table<LocalNote>
+  vaccinations!: Table<LocalVaccination>
+  appointments!: Table<LocalAppointment>
   pendingEvents!: Table<PendingEvent>
 
   constructor() {
@@ -92,6 +126,17 @@ class FamilyTrackerDB extends Dexie {
       medications: 'id, childId, name, active, pendingSync',
       medicationLogs: 'id, medicationId, childId, givenAt, pendingSync',
       notes: 'id, childId, authorId, pinned, pendingSync',
+      pendingEvents: 'id, type, entityId, timestamp',
+    })
+
+    this.version(2).stores({
+      feedings: 'id, childId, startTime, type, pendingSync',
+      sleep: 'id, childId, startTime, type, pendingSync',
+      medications: 'id, childId, name, active, pendingSync',
+      medicationLogs: 'id, medicationId, childId, givenAt, pendingSync',
+      notes: 'id, childId, authorId, pinned, pendingSync',
+      vaccinations: 'id, childId, name, scheduledAt, completed, pendingSync',
+      appointments: 'id, childId, type, scheduledAt, completed, cancelled, pendingSync',
       pendingEvents: 'id, type, entityId, timestamp',
     })
   }

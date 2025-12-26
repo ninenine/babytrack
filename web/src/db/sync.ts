@@ -1,6 +1,6 @@
 import { db } from './dexie'
 import { getPendingEvents, removePendingEvent, incrementRetryCount } from './events'
-import { apiClient } from '@/api/client'
+import { apiClient } from '@/lib/api-client'
 
 const MAX_RETRIES = 3
 
@@ -65,8 +65,17 @@ async function markEntityAsSynced(
     case 'medication':
       await db.medications.update(entityId, { syncedAt: now, pendingSync: false })
       break
+    case 'medication_log':
+      await db.medicationLogs.update(entityId, { syncedAt: now, pendingSync: false })
+      break
     case 'note':
       await db.notes.update(entityId, { syncedAt: now, pendingSync: false })
+      break
+    case 'vaccination':
+      await db.vaccinations.update(entityId, { syncedAt: now, pendingSync: false })
+      break
+    case 'appointment':
+      await db.appointments.update(entityId, { syncedAt: now, pendingSync: false })
       break
   }
 }
@@ -124,6 +133,20 @@ async function applyServerEvent(event: SyncEvent): Promise<void> {
         await db.notes.delete(entity_id)
       } else {
         await db.notes.put({ ...(data as object), id: entity_id, pendingSync: false } as never)
+      }
+      break
+    case 'vaccination':
+      if (action === 'delete') {
+        await db.vaccinations.delete(entity_id)
+      } else {
+        await db.vaccinations.put({ ...(data as object), id: entity_id, pendingSync: false } as never)
+      }
+      break
+    case 'appointment':
+      if (action === 'delete') {
+        await db.appointments.delete(entity_id)
+      } else {
+        await db.appointments.put({ ...(data as object), id: entity_id, pendingSync: false } as never)
       }
       break
   }

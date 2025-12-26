@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-interface Child {
+export interface Child {
   id: string
   name: string
   dateOfBirth: string
@@ -9,7 +9,7 @@ interface Child {
   avatarUrl?: string
 }
 
-interface Family {
+export interface Family {
   id: string
   name: string
   children: Child[]

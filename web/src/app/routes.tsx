@@ -1,16 +1,48 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSessionStore } from '@/stores/session.store'
 import { useFamilyStore } from '@/stores/family.store'
+import {
+  PageLoader,
+  HomePageLoader,
+  SettingsPageLoader,
+  AuthPageLoader,
+} from '@/components/shared/PageLoader'
 
-// Components
-import { Layout } from '@/components/Layout'
-import { LoginPage } from '@/features/auth'
-import { OnboardingPage } from '@/features/onboarding'
-import { Timeline } from '@/features/timeline'
-import { FeedingList } from '@/features/feeding'
-import { SleepList } from '@/features/sleep'
-import { MedicationList } from '@/features/medication'
-import { NotesList } from '@/features/notes'
+// Layout - loaded eagerly as it's needed for all routes
+import { AppShell } from '@/components/layout/app-shell'
+
+// Lazy loaded pages
+const LoginPage = lazy(() =>
+  import('@/pages/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
+)
+const OnboardingPage = lazy(() =>
+  import('@/pages/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage }))
+)
+const HomePage = lazy(() =>
+  import('@/pages/home/HomePage').then((m) => ({ default: m.HomePage }))
+)
+const FeedingPage = lazy(() =>
+  import('@/pages/feeding/FeedingPage').then((m) => ({ default: m.FeedingPage }))
+)
+const SleepPage = lazy(() =>
+  import('@/pages/sleep/SleepPage').then((m) => ({ default: m.SleepPage }))
+)
+const MedicationPage = lazy(() =>
+  import('@/pages/medication/MedicationPage').then((m) => ({ default: m.MedicationPage }))
+)
+const VaccinationPage = lazy(() =>
+  import('@/pages/vaccination/VaccinationPage').then((m) => ({ default: m.VaccinationPage }))
+)
+const AppointmentPage = lazy(() =>
+  import('@/pages/appointment/AppointmentPage').then((m) => ({ default: m.AppointmentPage }))
+)
+const NotesPage = lazy(() =>
+  import('@/pages/notes/NotesPage').then((m) => ({ default: m.NotesPage }))
+)
+const SettingsPage = lazy(() =>
+  import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+)
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useSessionStore((state) => state.isAuthenticated)
@@ -40,64 +72,104 @@ function RequireFamilyRoute({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      {/* Public routes */}
+      <Route
+        path="/login"
+        element={
+          <Suspense fallback={<AuthPageLoader />}>
+            <LoginPage />
+          </Suspense>
+        }
+      />
 
+      {/* Protected route without family */}
       <Route
         path="/onboarding"
         element={
           <ProtectedRoute>
-            <OnboardingPage />
+            <Suspense fallback={<AuthPageLoader />}>
+              <OnboardingPage />
+            </Suspense>
           </ProtectedRoute>
         }
       />
 
-      {/* App routes with bottom navigation */}
+      {/* App routes with layout */}
       <Route
         element={
           <RequireFamilyRoute>
-            <Layout />
+            <AppShell />
           </RequireFamilyRoute>
         }
       >
-        <Route index element={<Timeline />} />
-        <Route path="feeding" element={<FeedingList />} />
-        <Route path="sleep" element={<SleepList />} />
-        <Route path="history" element={<HistoryPlaceholder />} />
-        <Route path="health" element={<HealthPlaceholder />} />
-        <Route path="medications" element={<MedicationList />} />
-        <Route path="notes" element={<NotesList />} />
-        <Route path="settings" element={<SettingsPlaceholder />} />
+        <Route
+          index
+          element={
+            <Suspense fallback={<HomePageLoader />}>
+              <HomePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="feeding"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <FeedingPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="sleep"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <SleepPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="medications"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <MedicationPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="vaccinations"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <VaccinationPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="appointments"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <AppointmentPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="notes"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <NotesPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <Suspense fallback={<SettingsPageLoader />}>
+              <SettingsPage />
+            </Suspense>
+          }
+        />
       </Route>
 
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
-}
-
-// Placeholder components
-function HistoryPlaceholder() {
-  return (
-    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-      <h2>History</h2>
-      <p>Coming soon...</p>
-    </div>
-  )
-}
-
-function HealthPlaceholder() {
-  return (
-    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-      <h2>Health</h2>
-      <p>Medications, vaccinations, and growth tracking coming soon...</p>
-    </div>
-  )
-}
-
-function SettingsPlaceholder() {
-  return (
-    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-      <h2>Settings</h2>
-      <p>Account and preferences coming soon...</p>
-    </div>
   )
 }
