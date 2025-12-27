@@ -97,7 +97,7 @@ User Agent: ${navigator.userAgent}`
             </Button>
           </div>
           <div className="rounded-md bg-background border p-3 max-h-64 overflow-auto">
-            <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-words font-mono">
+            <pre className="text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word font-mono">
               {error.message}
               {error.stack && (
                 <>

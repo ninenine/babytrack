@@ -26,14 +26,14 @@ type FamilyMember struct {
 }
 
 type Child struct {
-	ID          string     `json:"id"`
-	FamilyID    string     `json:"family_id"`
-	Name        string     `json:"name"`
-	DateOfBirth time.Time  `json:"date_of_birth"`
-	Gender      string     `json:"gender,omitempty"`
-	AvatarURL   string     `json:"avatar_url,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID          string    `json:"id"`
+	FamilyID    string    `json:"family_id"`
+	Name        string    `json:"name"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Gender      string    `json:"gender,omitempty"`
+	AvatarURL   string    `json:"avatar_url,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type CreateFamilyRequest struct {

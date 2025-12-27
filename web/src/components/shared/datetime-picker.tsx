@@ -99,7 +99,7 @@ export function DateTimePicker({
               type="time"
               value={timeValue}
               onChange={handleTimeChange}
-              className="w-[120px]"
+              className="w-30"
             />
             <span className="text-xs text-muted-foreground">{tzAbbr}</span>
           </div>

@@ -79,6 +79,8 @@ family-tracker/
 - Node.js 20+
 - pnpm
 - Docker (for PostgreSQL)
+- pre-commit (`brew install pre-commit`)
+- Security tools (`brew install gitleaks gosec trivy`)
 
 ### Setup
 
@@ -88,9 +90,9 @@ family-tracker/
    cd family-tracker
    ```
 
-2. **Install frontend dependencies**
+2. **Install all dependencies and set up hooks**
    ```bash
-   cd web && pnpm install && cd ..
+   make install
    ```
 
 3. **Start the database**
@@ -149,12 +151,72 @@ The Vite dev server runs on `http://localhost:5173` and proxies API requests to 
 | `make build-server` | Build web UI and server binary |
 | `make run` | Run the built binary |
 
+### Code Quality
+| Command | Description |
+|---------|-------------|
+| `make lint` | Run linters (Go vet + ESLint) |
+| `make format` | Format all code (gofmt + Prettier) |
+| `make pre-commit` | Run all pre-commit hooks |
+| `make test` | Run Go tests |
+
 ### Other
 | Command | Description |
 |---------|-------------|
 | `make clean` | Clean build artifacts |
-| `make lint` | Run linters (Go + ESLint) |
-| `make test` | Run Go tests |
+
+## Code Quality
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) for automated code quality checks. Hooks are installed automatically via `make install`.
+
+| Hook | Purpose |
+|------|---------|
+| `trailing-whitespace` | Remove trailing whitespace |
+| `end-of-file-fixer` | Ensure files end with newline |
+| `check-yaml` | Validate YAML syntax |
+| `check-added-large-files` | Block files > 1MB |
+| `detect-private-key` | Block commits with private keys |
+| `detect-aws-credentials` | Block commits with AWS credentials |
+| `gitleaks` | Scan for secrets (API keys, tokens) |
+| `gosec` | Go security static analysis |
+| `go-fmt` | Format Go code |
+| `go-vet` | Go static analysis |
+| `go-mod-tidy` | Keep go.mod clean |
+| `eslint` | Lint TypeScript/React code |
+| `prettier` | Format CSS files |
+| `commitlint` | Enforce conventional commits |
+
+### Commit Message Format
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope?): subject
+
+body?
+
+footer?
+```
+
+**Allowed types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+**Examples:**
+```bash
+git commit -m "feat: add dark mode toggle"
+git commit -m "fix: resolve login redirect issue"
+git commit -m "docs: update API documentation"
+```
+
+### Manual Security Scanning
+
+```bash
+# Vulnerability scanning with Trivy
+trivy fs --severity HIGH,CRITICAL .
+
+# Full Go security report
+gosec -fmt=html -out=gosec-report.html ./...
+```
 
 ## API Endpoints
 

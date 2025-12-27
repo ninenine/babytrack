@@ -1,4 +1,4 @@
-.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint test test-web test-all
+.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint format pre-commit test test-web test-all
 
 # Default target
 help:
@@ -20,6 +20,11 @@ help:
 	@echo "    make build-web  - Build only the web UI"
 	@echo "    make build-server - Build only the server binary"
 	@echo ""
+	@echo "  Code Quality:"
+	@echo "    make lint       - Run linters"
+	@echo "    make format     - Format all code"
+	@echo "    make pre-commit - Run pre-commit hooks on all files"
+	@echo ""
 	@echo "  Testing:"
 	@echo "    make test       - Run Go tests"
 	@echo "    make test-web   - Run web tests"
@@ -28,7 +33,6 @@ help:
 	@echo "  Other:"
 	@echo "    make run        - Run the built binary"
 	@echo "    make clean      - Clean build artifacts"
-	@echo "    make lint       - Run linters"
 
 # Install dependencies
 install:
@@ -36,6 +40,9 @@ install:
 	go mod download
 	@echo "Installing web dependencies..."
 	cd web && pnpm install
+	@echo "Setting up pre-commit hooks..."
+	pre-commit install
+	pre-commit install --hook-type commit-msg
 
 # Database commands
 db-up:
@@ -91,6 +98,17 @@ lint:
 	go vet ./...
 	@echo "Linting web..."
 	cd web && pnpm lint
+
+# Formatting
+format:
+	@echo "Formatting Go..."
+	gofmt -w .
+	@echo "Formatting web..."
+	cd web && pnpm prettier --write "src/**/*.{ts,tsx,css}"
+
+# Pre-commit hooks
+pre-commit:
+	pre-commit run --all-files
 
 # Tests
 test:

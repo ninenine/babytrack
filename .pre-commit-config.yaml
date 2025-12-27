@@ -1,0 +1,85 @@
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      # Security: detect private keys
+      - id: detect-private-key
+      # Security: detect AWS credentials
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+
+  # Go formatting and linting
+  - repo: local
+    hooks:
+      # Security: Gitleaks - detect secrets in code
+      - id: gitleaks
+        name: Gitleaks (secrets detection)
+        entry: gitleaks git --staged --verbose --redact
+        language: system
+        pass_filenames: false
+
+      # Security: gosec - Go security checker (MEDIUM+ severity)
+      # G304: File path from variable (false positive for CLI config)
+      - id: gosec
+        name: Gosec (Go security)
+        entry: gosec -exclude-dir=web -exclude=G304 -severity=medium ./...
+        language: system
+        files: \.go$
+        pass_filenames: false
+
+      - id: go-fmt
+        name: Go Format
+        entry: gofmt -w
+        language: system
+        files: \.go$
+        pass_filenames: true
+
+      - id: go-vet
+        name: Go Vet
+        entry: bash -c 'go vet ./...'
+        language: system
+        files: \.go$
+        pass_filenames: false
+
+      - id: go-mod-tidy
+        name: Go Mod Tidy
+        entry: go mod tidy
+        language: system
+        files: go\.(mod|sum)$
+        pass_filenames: false
+
+  # ESLint for TypeScript/React (run from web directory)
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: bash -c 'cd web && pnpm eslint --fix $(echo "$@" | sed "s|web/||g")'
+        language: system
+        files: ^web/src/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: true
+
+  # Prettier for web CSS files
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: bash -c 'FILES=$(echo "$@" | sed "s|web/||g"); [ -n "$FILES" ] && cd web && pnpm prettier --write $FILES || true'
+        language: system
+        files: ^web/src/.*\.css$
+        pass_filenames: true
+
+  # Commitlint for conventional commits
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.21.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies:
+          - "@commitlint/config-conventional"
+          - "@commitlint/cli"
