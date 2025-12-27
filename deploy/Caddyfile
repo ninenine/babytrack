@@ -1,4 +1,4 @@
-# Family Tracker Caddyfile
+# BabyTrack Caddyfile
 # Replace your-domain.com with your actual domain
 
 your-domain.com {
@@ -51,7 +51,7 @@ your-domain.com {
 
     # Logging
     log {
-        output file /var/log/caddy/family-tracker.log {
+        output file /var/log/caddy/babytrack.log {
             roll_size 10mb
             roll_keep 5
         }

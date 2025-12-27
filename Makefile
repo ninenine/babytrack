@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Family Tracker - Available commands:"
+	@echo "BabyTrack - Available commands:"
 	@echo ""
 	@echo "  Development:"
 	@echo "    make install    - Install all dependencies"
@@ -77,18 +77,18 @@ build-web:
 
 build-server: build-web
 	@echo "Building Go binary..."
-	CGO_ENABLED=0 go build -o family-tracker ./cmd/server
-	@echo "Build complete: ./family-tracker"
+	CGO_ENABLED=0 go build -o babytrack ./cmd/server
+	@echo "Build complete: ./babytrack"
 
 build: build-server
 
 # Run built binary
 run:
-	./family-tracker -config ./configs/config.yaml
+	./babytrack -config ./configs/config.yaml
 
 # Clean build artifacts
 clean:
-	rm -f family-tracker server
+	rm -f babytrack server
 	rm -rf internal/app/web_dist
 	rm -rf web/node_modules/.vite
 

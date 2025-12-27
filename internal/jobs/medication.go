@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"family-tracker/internal/medication"
-	"family-tracker/internal/notifications"
+	"github.com/ninenine/babytrack/internal/medication"
+	"github.com/ninenine/babytrack/internal/notifications"
 
 	"github.com/google/uuid"
 )

@@ -1,5 +1,5 @@
-# Family Tracker Production Configuration
-# Copy this file to /opt/family-tracker/config.yaml and fill in the values
+# BabyTrack Production Configuration
+# Copy this file to /opt/babytrack/config.yaml and fill in the values
 
 server:
   port: 8080
@@ -9,7 +9,7 @@ server:
 database:
   # PostgreSQL connection string
   # Format: postgres://user:password@host:port/database?sslmode=require
-  dsn: postgres://family_tracker:CHANGE_THIS_PASSWORD@localhost:5432/family_tracker?sslmode=disable
+  dsn: postgres://babytrack:CHANGE_THIS_PASSWORD@localhost:5432/babytrack?sslmode=disable
 
 auth:
   # Get these from Google Cloud Console:

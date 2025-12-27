@@ -1,19 +1,19 @@
 [Unit]
-Description=Family Tracker API Server
+Description=BabyTrack API Server
 After=network.target postgresql.service
 Wants=postgresql.service
 
 [Service]
 Type=simple
-User=family-tracker
-Group=family-tracker
-WorkingDirectory=/opt/family-tracker
-ExecStart=/opt/family-tracker/family-tracker -config /opt/family-tracker/config.yaml
+User=babytrack
+Group=babytrack
+WorkingDirectory=/opt/babytrack
+ExecStart=/opt/babytrack/babytrack -config /opt/babytrack/config.yaml
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=family-tracker
+SyslogIdentifier=babytrack
 
 # Security hardening
 NoNewPrivileges=true
@@ -24,7 +24,7 @@ PrivateDevices=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-ReadWritePaths=/opt/family-tracker
+ReadWritePaths=/opt/babytrack
 
 # Environment
 Environment=GIN_MODE=release

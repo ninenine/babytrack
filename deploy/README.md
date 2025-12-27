@@ -1,6 +1,6 @@
-# Family Tracker Deployment Guide
+# BabyTrack Deployment Guide
 
-Deploy Family Tracker on Ubuntu 24.04 with PostgreSQL and Caddy.
+Deploy BabyTrack on Ubuntu 24.04 with PostgreSQL and Caddy.
 
 ## Prerequisites
 
@@ -17,10 +17,10 @@ On your development machine:
 
 ```bash
 # Build for Linux
-GOOS=linux GOARCH=amd64 go build -o family-tracker ./cmd/server
+GOOS=linux GOARCH=amd64 go build -o babytrack ./cmd/server
 
 # Copy to server
-scp family-tracker user@your-server:/tmp/
+scp babytrack user@your-server:/tmp/
 scp -r deploy/* user@your-server:/tmp/deploy/
 ```
 
@@ -36,8 +36,8 @@ sudo ./install.sh your-domain.com
 This will:
 - Install PostgreSQL
 - Create database and user
-- Create system user `family-tracker`
-- Set up the application directory `/opt/family-tracker`
+- Create system user `babytrack`
+- Set up the application directory `/opt/babytrack`
 - Generate secure passwords and JWT secret
 - Install the systemd service
 
@@ -52,7 +52,7 @@ This will:
 Update the config:
 
 ```bash
-sudo nano /opt/family-tracker/config.yaml
+sudo nano /opt/babytrack/config.yaml
 ```
 
 Replace `YOUR_GOOGLE_CLIENT_ID` and `YOUR_GOOGLE_CLIENT_SECRET` with your values.
@@ -70,8 +70,8 @@ Copy the contents from `Caddyfile` in this directory, replacing `your-domain.com
 ### 5. Start services
 
 ```bash
-# Start Family Tracker
-sudo systemctl enable --now family-tracker
+# Start BabyTrack
+sudo systemctl enable --now babytrack
 
 # Reload Caddy
 sudo systemctl reload caddy
@@ -80,8 +80,8 @@ sudo systemctl reload caddy
 ## File Structure
 
 ```
-/opt/family-tracker/
-├── family-tracker     # Binary
+/opt/babytrack/
+├── babytrack     # Binary
 ├── config.yaml        # Configuration
 └── backups/           # Database backups
 ```
@@ -92,66 +92,66 @@ sudo systemctl reload caddy
 
 ```bash
 # Start/stop/restart
-sudo systemctl start family-tracker
-sudo systemctl stop family-tracker
-sudo systemctl restart family-tracker
+sudo systemctl start babytrack
+sudo systemctl stop babytrack
+sudo systemctl restart babytrack
 
 # View status
-sudo systemctl status family-tracker
+sudo systemctl status babytrack
 
 # View logs
-sudo journalctl -u family-tracker -f
+sudo journalctl -u babytrack -f
 ```
 
 ### Database
 
 ```bash
 # Connect to database
-sudo -u postgres psql family_tracker
+sudo -u postgres psql babytrack
 
 # Run migrations manually
-sudo -u family-tracker /opt/family-tracker/family-tracker -config /opt/family-tracker/config.yaml -migrate
+sudo -u babytrack /opt/babytrack/babytrack -config /opt/babytrack/config.yaml -migrate
 ```
 
 ### Backup
 
 ```bash
 # Manual backup
-sudo /opt/family-tracker/backup.sh
+sudo /opt/babytrack/backup.sh
 
 # Set up automated daily backups (2 AM)
 sudo crontab -e
-# Add: 0 2 * * * /opt/family-tracker/backup.sh
+# Add: 0 2 * * * /opt/babytrack/backup.sh
 ```
 
 ### Restore from Backup
 
 ```bash
 # Stop the service
-sudo systemctl stop family-tracker
+sudo systemctl stop babytrack
 
 # Restore
-gunzip -c /opt/family-tracker/backups/family_tracker_TIMESTAMP.sql.gz | sudo -u postgres psql family_tracker
+gunzip -c /opt/babytrack/backups/babytrack_TIMESTAMP.sql.gz | sudo -u postgres psql babytrack
 
 # Start the service
-sudo systemctl start family-tracker
+sudo systemctl start babytrack
 ```
 
 ## Updating
 
 ```bash
 # Build new binary
-GOOS=linux GOARCH=amd64 go build -o family-tracker ./cmd/server
+GOOS=linux GOARCH=amd64 go build -o babytrack ./cmd/server
 
 # Copy to server
-scp family-tracker user@your-server:/tmp/
+scp babytrack user@your-server:/tmp/
 
 # On server: update binary
-sudo systemctl stop family-tracker
-sudo cp /tmp/family-tracker /opt/family-tracker/
-sudo chown family-tracker:family-tracker /opt/family-tracker/family-tracker
-sudo chmod +x /opt/family-tracker/family-tracker
-sudo systemctl start family-tracker
+sudo systemctl stop babytrack
+sudo cp /tmp/babytrack /opt/babytrack/
+sudo chown babytrack:babytrack /opt/babytrack/babytrack
+sudo chmod +x /opt/babytrack/babytrack
+sudo systemctl start babytrack
 ```
 
 ## Troubleshooting
@@ -159,8 +159,8 @@ sudo systemctl start family-tracker
 ### Check service status
 
 ```bash
-sudo systemctl status family-tracker
-sudo journalctl -u family-tracker --since "10 minutes ago"
+sudo systemctl status babytrack
+sudo journalctl -u babytrack --since "10 minutes ago"
 ```
 
 ### Check Caddy
@@ -173,7 +173,7 @@ sudo journalctl -u caddy --since "10 minutes ago"
 ### Test database connection
 
 ```bash
-sudo -u postgres psql -c "SELECT 1" family_tracker
+sudo -u postgres psql -c "SELECT 1" babytrack
 ```
 
 ### Check ports
@@ -189,7 +189,7 @@ ss -tlnp | grep -E ':(80|443)'
 ## Security Notes
 
 - Config file has restricted permissions (600)
-- App runs as unprivileged `family-tracker` user
+- App runs as unprivileged `babytrack` user
 - Systemd service has security hardening enabled
 - Database password is randomly generated
 - JWT secret is randomly generated

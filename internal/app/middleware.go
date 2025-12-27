@@ -3,7 +3,7 @@ package app
 import (
 	"strings"
 
-	"family-tracker/internal/auth"
+	"github.com/ninenine/babytrack/internal/auth"
 
 	"github.com/gin-gonic/gin"
 )

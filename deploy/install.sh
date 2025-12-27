@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Family Tracker Installation Script for Ubuntu 24.04
+# BabyTrack Installation Script for Ubuntu 24.04
 # Run as root or with sudo
 
 # Colors for output
@@ -21,13 +21,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Configuration
-APP_USER="family-tracker"
-APP_DIR="/opt/family-tracker"
-DB_NAME="family_tracker"
-DB_USER="family_tracker"
+APP_USER="babytrack"
+APP_DIR="/opt/babytrack"
+DB_NAME="babytrack"
+DB_USER="babytrack"
 DOMAIN="${1:-}"
 
-echo_info "Starting Family Tracker installation..."
+echo_info "Starting BabyTrack installation..."
 
 # Update system
 echo_info "Updating system packages..."
@@ -66,13 +66,13 @@ echo_info "Setting up application directory..."
 mkdir -p "$APP_DIR"
 
 # Check if binary exists in current directory
-if [[ -f "./family-tracker" ]]; then
-    cp ./family-tracker "$APP_DIR/"
-    chmod +x "$APP_DIR/family-tracker"
+if [[ -f "./babytrack" ]]; then
+    cp ./babytrack "$APP_DIR/"
+    chmod +x "$APP_DIR/babytrack"
     echo_info "Binary copied to $APP_DIR"
 else
-    echo_warn "Binary 'family-tracker' not found in current directory"
-    echo_warn "You'll need to copy it manually to $APP_DIR/family-tracker"
+    echo_warn "Binary 'babytrack' not found in current directory"
+    echo_warn "You'll need to copy it manually to $APP_DIR/babytrack"
 fi
 
 # Generate JWT secret
@@ -104,7 +104,7 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 # Install systemd service
 echo_info "Installing systemd service..."
-cp ./family-tracker.service /etc/systemd/system/
+cp ./babytrack.service /etc/systemd/system/
 systemctl daemon-reload
 
 # Create Caddy log directory
@@ -131,7 +131,7 @@ echo "   sudo nano /etc/caddy/Caddyfile"
 echo "   # Add the contents from deploy/Caddyfile"
 echo ""
 echo "4. Start the services:"
-echo "   sudo systemctl enable --now family-tracker"
+echo "   sudo systemctl enable --now babytrack"
 echo "   sudo systemctl reload caddy"
 echo ""
 echo "Database credentials (save these!):"

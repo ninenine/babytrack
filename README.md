@@ -1,4 +1,4 @@
-# Family Tracker
+# BabyTrack
 
 A mobile-first web application for tracking baby care activities including feeding, sleep, medications, vaccinations, appointments, and notes. Built with offline-first architecture for reliable use even without internet connectivity.
 
@@ -38,7 +38,7 @@ A mobile-first web application for tracking baby care activities including feedi
 ## Project Structure
 
 ```
-family-tracker/
+babytrack/
 ├── cmd/
 │   └── server/          # Application entrypoint
 ├── configs/             # Configuration files
@@ -86,8 +86,8 @@ family-tracker/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd family-tracker
+   git clone https://github.com/ninenine/babytrack.git
+   cd babytrack
    ```
 
 2. **Install all dependencies and set up hooks**
@@ -283,7 +283,7 @@ server:
   base_url: http://localhost:8080
 
 database:
-  dsn: postgres://family:family123@localhost:5432/family_tracker?sslmode=disable
+  dsn: postgres://babytrack:babytrack123@localhost:5432/babytrack?sslmode=disable
 
 auth:
   google_client_id: your-google-client-id
@@ -293,6 +293,10 @@ auth:
 notifications:
   enabled: false
 ```
+
+## Roadmap
+
+- [ ] Email invites - Send family invite links via email
 
 ## License
 
