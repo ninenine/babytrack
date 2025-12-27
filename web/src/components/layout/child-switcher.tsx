@@ -86,7 +86,7 @@ export function ChildSwitcher() {
               {currentChild.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="max-w-[100px] truncate">{currentChild.name}</span>
+          <span className="max-w-25 truncate">{currentChild.name}</span>
           <Badge variant="secondary" className="text-xs">
             {formatAge(currentChild.dateOfBirth)}
           </Badge>

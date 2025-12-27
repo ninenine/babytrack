@@ -22,6 +22,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const { token } = useSessionStore()
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const connectRef = useRef<() => void>(() => {})
   const [connected, setConnected] = useState(false)
 
   const connect = useCallback(() => {
@@ -50,7 +51,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       // Reconnect after 5 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
         console.log('[SSE] Attempting to reconnect...')
-        connect()
+        connectRef.current()
       }, 5000)
     }
 
@@ -110,6 +111,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
     eventSourceRef.current = eventSource
   }, [token, enabled, onNotification])
+
+  // Keep ref updated for reconnection
+  useEffect(() => {
+    connectRef.current = connect
+  }, [connect])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

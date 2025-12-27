@@ -17,12 +17,12 @@ var sleepRecommendations = map[string]struct {
 	minHours float64
 	maxHours float64
 }{
-	"newborn":  {14, 17}, // 0-3 months
-	"infant":   {12, 15}, // 4-11 months
-	"toddler":  {11, 14}, // 1-2 years
-	"pre-k":    {10, 13}, // 3-5 years
-	"child":    {9, 11},  // 6-12 years
-	"default":  {10, 14}, // Default for babies
+	"newborn": {14, 17}, // 0-3 months
+	"infant":  {12, 15}, // 4-11 months
+	"toddler": {11, 14}, // 1-2 years
+	"pre-k":   {10, 13}, // 3-5 years
+	"child":   {9, 11},  // 6-12 years
+	"default": {10, 14}, // Default for babies
 }
 
 // SleepAnalyticsJob calculates daily sleep statistics and sends insights.

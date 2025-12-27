@@ -3,19 +3,19 @@ package vaccination
 import "time"
 
 type Vaccination struct {
-	ID           string     `json:"id"`
-	ChildID      string     `json:"child_id"`
-	Name         string     `json:"name"`
-	Dose         int        `json:"dose"` // 1st, 2nd, 3rd, etc.
-	ScheduledAt  time.Time  `json:"scheduled_at"`
+	ID             string     `json:"id"`
+	ChildID        string     `json:"child_id"`
+	Name           string     `json:"name"`
+	Dose           int        `json:"dose"` // 1st, 2nd, 3rd, etc.
+	ScheduledAt    time.Time  `json:"scheduled_at"`
 	AdministeredAt *time.Time `json:"administered_at,omitempty"`
-	Provider     string     `json:"provider,omitempty"`
-	Location     string     `json:"location,omitempty"`
-	LotNumber    string     `json:"lot_number,omitempty"`
-	Notes        string     `json:"notes,omitempty"`
-	Completed    bool       `json:"completed"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	Provider       string     `json:"provider,omitempty"`
+	Location       string     `json:"location,omitempty"`
+	LotNumber      string     `json:"lot_number,omitempty"`
+	Notes          string     `json:"notes,omitempty"`
+	Completed      bool       `json:"completed"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type VaccinationSchedule struct {

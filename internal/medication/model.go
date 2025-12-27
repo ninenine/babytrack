@@ -18,14 +18,14 @@ type Medication struct {
 }
 
 type MedicationLog struct {
-	ID           string    `json:"id"`
-	MedicationID string    `json:"medication_id"`
-	ChildID      string    `json:"child_id"`
-	GivenAt      time.Time `json:"given_at"`
-	GivenBy      string    `json:"given_by"` // user ID
-	Dosage       string    `json:"dosage"`
-	Notes        string    `json:"notes,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           string     `json:"id"`
+	MedicationID string     `json:"medication_id"`
+	ChildID      string     `json:"child_id"`
+	GivenAt      time.Time  `json:"given_at"`
+	GivenBy      string     `json:"given_by"` // user ID
+	Dosage       string     `json:"dosage"`
+	Notes        string     `json:"notes,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
 	SyncedAt     *time.Time `json:"synced_at,omitempty"`
 }
 

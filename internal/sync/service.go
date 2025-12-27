@@ -15,13 +15,13 @@ import (
 type EventType string
 
 const (
-	EventTypeFeeding        EventType = "feeding"
-	EventTypeSleep          EventType = "sleep"
-	EventTypeMedication     EventType = "medication"
-	EventTypeMedicationLog  EventType = "medication_log"
-	EventTypeNote           EventType = "note"
-	EventTypeVaccination    EventType = "vaccination"
-	EventTypeAppointment    EventType = "appointment"
+	EventTypeFeeding       EventType = "feeding"
+	EventTypeSleep         EventType = "sleep"
+	EventTypeMedication    EventType = "medication"
+	EventTypeMedicationLog EventType = "medication_log"
+	EventTypeNote          EventType = "note"
+	EventTypeVaccination   EventType = "vaccination"
+	EventTypeAppointment   EventType = "appointment"
 )
 
 type Event struct {

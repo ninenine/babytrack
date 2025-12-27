@@ -30,23 +30,23 @@ import (
 var uiFS embed.FS
 
 type Server struct {
-	cfg                   *Config
-	db                    *db.DB
-	router                *gin.Engine
-	httpServer            *http.Server
-	scheduler             *jobs.Scheduler
-	notificationHub       *notifications.Hub
-	authService           auth.Service
-	authHandler           *auth.Handler
-	familyHandler         *family.Handler
-	feedingHandler        *feeding.Handler
-	sleepHandler          *sleep.Handler
-	medicationHandler     *medication.Handler
-	notesHandler          *notes.Handler
-	vaccinationHandler    *vaccination.Handler
-	appointmentHandler    *appointment.Handler
-	syncHandler           *sync.Handler
-	notificationsHandler  *notifications.Handler
+	cfg                  *Config
+	db                   *db.DB
+	router               *gin.Engine
+	httpServer           *http.Server
+	scheduler            *jobs.Scheduler
+	notificationHub      *notifications.Hub
+	authService          auth.Service
+	authHandler          *auth.Handler
+	familyHandler        *family.Handler
+	feedingHandler       *feeding.Handler
+	sleepHandler         *sleep.Handler
+	medicationHandler    *medication.Handler
+	notesHandler         *notes.Handler
+	vaccinationHandler   *vaccination.Handler
+	appointmentHandler   *appointment.Handler
+	syncHandler          *sync.Handler
+	notificationsHandler *notifications.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
