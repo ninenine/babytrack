@@ -32,3 +32,6 @@ gosec-report.json
 
 # Config with secrets (use config.yaml as base, override with config.local.yaml)
 configs/config.local.yaml
+
+# Deploy scripts (keep local only)
+deploy/
