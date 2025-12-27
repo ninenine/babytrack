@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DatePicker } from '@/components/shared/date-picker'
+import { DateTimePicker } from '@/components/shared/datetime-picker'
 import { useFamilyStore } from '@/stores/family.store'
 import { apiClient } from '@/lib/api-client'
 import { API_ENDPOINTS } from '@/lib/constants'
-import { toAPIDate } from '@/lib/dates'
+import { toAPIDateTime } from '@/lib/dates'
 
 type Step = 'family' | 'child'
 
@@ -66,7 +66,7 @@ export function OnboardingPage() {
         date_of_birth: string
       }>(API_ENDPOINTS.FAMILIES.CHILDREN(familyId), {
         name: childName,
-        date_of_birth: toAPIDate(childDob),
+        date_of_birth: toAPIDateTime(childDob),
       })
 
       // Set the family with the new child
@@ -180,14 +180,13 @@ export function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
-                <DatePicker
+                <Label>Date & Time of Birth</Label>
+                <DateTimePicker
                   date={childDob}
                   onDateChange={setChildDob}
-                  placeholder="Select date of birth"
+                  placeholder="Select date & time of birth"
                   disabled={isLoading}
                   toDate={new Date()}
-                  captionLayout="dropdown"
                 />
               </div>
 

@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/shared/date-picker'
-import { toAPIDate, fromAPIDate } from '@/lib/dates'
+import { DateTimePicker } from '@/components/shared/datetime-picker'
+import { toAPIDateTime, fromAPIDateTime } from '@/lib/dates'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -57,7 +57,7 @@ function getDefaultValues(): ChildFormValues {
 function childToFormValues(child: Child): ChildFormValues {
   return {
     name: child.name,
-    dateOfBirth: fromAPIDate(child.dateOfBirth),
+    dateOfBirth: fromAPIDateTime(child.dateOfBirth),
     gender: child.gender || '',
   }
 }
@@ -86,7 +86,7 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
       const childData: Child = {
         id: child?.id || crypto.randomUUID(),
         name: values.name,
-        dateOfBirth: toAPIDate(values.dateOfBirth),
+        dateOfBirth: toAPIDateTime(values.dateOfBirth),
         gender: values.gender || undefined,
         avatarUrl: child?.avatarUrl,
       }
@@ -137,14 +137,13 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
               name="dateOfBirth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date of Birth</FormLabel>
+                  <FormLabel>Date & Time of Birth</FormLabel>
                   <FormControl>
-                    <DatePicker
+                    <DateTimePicker
                       date={field.value}
                       onDateChange={field.onChange}
-                      placeholder="Select date of birth"
+                      placeholder="Select date & time of birth"
                       toDate={new Date()}
-                      captionLayout="dropdown"
                     />
                   </FormControl>
                   <FormMessage />

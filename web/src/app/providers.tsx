@@ -30,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <BrowserRouter>
         <SyncProvider>
           {children}
-          <Toaster position="top-center" richColors />
+          <Toaster position="top-center" richColors closeButton />
         </SyncProvider>
       </BrowserRouter>
     </QueryClientProvider>

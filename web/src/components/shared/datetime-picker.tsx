@@ -21,6 +21,10 @@ interface DateTimePickerProps {
   className?: string
   /** Show timezone abbreviation in the display */
   showTimezone?: boolean
+  /** Maximum date that can be selected */
+  toDate?: Date
+  /** Minimum date that can be selected */
+  fromDate?: Date
 }
 
 export function DateTimePicker({
@@ -30,11 +34,27 @@ export function DateTimePicker({
   disabled,
   className,
   showTimezone = true,
+  toDate,
+  fromDate,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
 
   const timeValue = date ? format(date, 'HH:mm') : ''
   const tzAbbr = getTimezoneAbbr()
+
+  // Build disabled matcher for calendar
+  const disabledMatcher = React.useMemo(() => {
+    if (toDate && fromDate) {
+      return { after: toDate, before: fromDate }
+    }
+    if (toDate) {
+      return { after: toDate }
+    }
+    if (fromDate) {
+      return { before: fromDate }
+    }
+    return undefined
+  }, [toDate, fromDate])
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!selectedDate) {
@@ -90,6 +110,7 @@ export function DateTimePicker({
           selected={date}
           onSelect={handleDateSelect}
           defaultMonth={date}
+          disabled={disabledMatcher}
           initialFocus
         />
         <div className="border-t p-3">

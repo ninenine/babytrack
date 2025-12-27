@@ -121,3 +121,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Prevent Radix Dialog from adding padding-right on mobile */
+@media (max-width: 768px) {
+  body[style*="padding-right"] {
+    padding-right: 0 !important;
+  }
+}
