@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Utensils, Moon, Heart, MoreHorizontal } from 'lucide-react'
+import { Home, Utensils, Moon, Pill, MoreHorizontal } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -15,11 +15,10 @@ const mainTabs = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/feeding', icon: Utensils, label: 'Feeding' },
   { to: '/sleep', icon: Moon, label: 'Sleep' },
-  { to: '/health', icon: Heart, label: 'Health' },
+  { to: '/medications', icon: Pill, label: 'Meds' },
 ]
 
 const moreLinks = [
-  { to: '/medications', label: 'Medications' },
   { to: '/vaccinations', label: 'Vaccinations' },
   { to: '/appointments', label: 'Appointments' },
   { to: '/notes', label: 'Notes' },

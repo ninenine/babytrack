@@ -12,7 +12,7 @@ type Service interface {
 	// Family
 	CreateFamily(ctx context.Context, userID string, req *CreateFamilyRequest) (*Family, error)
 	GetFamily(ctx context.Context, familyID string) (*Family, error)
-	GetUserFamilies(ctx context.Context, userID string) ([]Family, error)
+	GetUserFamilies(ctx context.Context, userID string) ([]FamilyWithChildren, error)
 
 	// Members
 	InviteMember(ctx context.Context, familyID string, req *InviteRequest) error
@@ -69,15 +69,34 @@ func (s *service) GetFamily(ctx context.Context, familyID string) (*Family, erro
 	return s.repo.GetFamilyByID(ctx, familyID)
 }
 
-func (s *service) GetUserFamilies(ctx context.Context, userID string) ([]Family, error) {
+func (s *service) GetUserFamilies(ctx context.Context, userID string) ([]FamilyWithChildren, error) {
 	families, err := s.repo.GetUserFamilies(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	if families == nil {
-		return []Family{}, nil
+		return []FamilyWithChildren{}, nil
 	}
-	return families, nil
+
+	// Fetch children for each family
+	result := make([]FamilyWithChildren, len(families))
+	for i, f := range families {
+		children, err := s.repo.GetChildren(ctx, f.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get children for family %s: %w", f.ID, err)
+		}
+		if children == nil {
+			children = []Child{}
+		}
+		result[i] = FamilyWithChildren{
+			ID:        f.ID,
+			Name:      f.Name,
+			Children:  children,
+			CreatedAt: f.CreatedAt,
+			UpdatedAt: f.UpdatedAt,
+		}
+	}
+	return result, nil
 }
 
 func (s *service) InviteMember(ctx context.Context, familyID string, req *InviteRequest) error {

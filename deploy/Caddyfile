@@ -1,0 +1,59 @@
+# Family Tracker Caddyfile
+# Replace your-domain.com with your actual domain
+
+your-domain.com {
+    # Enable compression
+    encode gzip
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=63072000"
+    }
+
+    # SSE endpoint - disable buffering
+    @sse path /api/notifications/stream
+    handle @sse {
+        reverse_proxy localhost:8080 {
+            flush_interval -1
+            transport http {
+                keepalive off
+            }
+        }
+    }
+
+    # API endpoints
+    @api path /api/*
+    handle @api {
+        reverse_proxy localhost:8080
+    }
+
+    # OAuth callback
+    @auth path /auth/*
+    handle @auth {
+        reverse_proxy localhost:8080
+    }
+
+    # Static assets with caching
+    @static path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2
+    handle @static {
+        header Cache-Control "public, max-age=31536000, immutable"
+        reverse_proxy localhost:8080
+    }
+
+    # Everything else (SPA)
+    handle {
+        reverse_proxy localhost:8080
+    }
+
+    # Logging
+    log {
+        output file /var/log/caddy/family-tracker.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
