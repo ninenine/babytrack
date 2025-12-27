@@ -20,6 +20,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/:familyId", h.getFamily)
 
 	rg.POST("/:familyId/invite", h.inviteMember)
+	rg.POST("/:familyId/join", h.joinFamily)
 	rg.DELETE("/:familyId/members/:userId", h.removeMember)
 
 	rg.GET("/:familyId/children", h.listChildren)
@@ -77,6 +78,22 @@ func (h *Handler) inviteMember(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "invite sent"})
+}
+
+func (h *Handler) joinFamily(c *gin.Context) {
+	familyID := c.Param("familyId")
+	userID := c.GetString("user_id")
+
+	family, err := h.service.JoinFamily(c.Request.Context(), familyID, userID)
+	if err != nil {
+		if err.Error() == "family not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, family)
 }
 
 func (h *Handler) removeMember(c *gin.Context) {

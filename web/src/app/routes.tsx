@@ -43,6 +43,9 @@ const NotesPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 )
+const InvitePage = lazy(() =>
+  import('@/pages/invite/InvitePage').then((m) => ({ default: m.InvitePage }))
+)
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useSessionStore((state) => state.isAuthenticated)
@@ -91,6 +94,16 @@ export function AppRoutes() {
               <OnboardingPage />
             </Suspense>
           </ProtectedRoute>
+        }
+      />
+
+      {/* Invite route - protected but doesn't require family */}
+      <Route
+        path="/invite/:familyId"
+        element={
+          <Suspense fallback={<AuthPageLoader />}>
+            <InvitePage />
+          </Suspense>
         }
       />
 

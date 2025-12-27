@@ -83,6 +83,13 @@ export function LoginPage() {
             })),
           }))
         )
+      }
+
+      // Check for invite redirect
+      const inviteRedirect = sessionStorage.getItem('invite_redirect')
+      if (inviteRedirect) {
+        navigate(inviteRedirect)
+      } else if (families.length > 0) {
         navigate('/')
       } else {
         navigate('/onboarding')

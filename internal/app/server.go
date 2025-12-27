@@ -61,8 +61,7 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 
 	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecret, 24*time.Hour)
 
-	// Use postgres repository
-	authRepo := auth.NewPostgresRepository(database.DB)
+	authRepo := auth.NewRepository(database.DB)
 	authService := auth.NewService(authRepo, googleClient, jwtManager)
 	authHandler := auth.NewHandler(authService)
 

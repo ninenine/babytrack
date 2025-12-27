@@ -17,6 +17,7 @@ type Repository interface {
 	AddFamilyMember(ctx context.Context, member *FamilyMember) error
 	RemoveFamilyMember(ctx context.Context, familyID, userID string) error
 	GetUserFamilies(ctx context.Context, userID string) ([]Family, error)
+	IsMember(ctx context.Context, familyID, userID string) (bool, error)
 
 	// Children
 	GetChildren(ctx context.Context, familyID string) ([]Child, error)
@@ -124,6 +125,17 @@ func (r *repository) RemoveFamilyMember(ctx context.Context, familyID, userID st
 
 	_, err := r.db.ExecContext(ctx, query, familyID, userID)
 	return err
+}
+
+func (r *repository) IsMember(ctx context.Context, familyID, userID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM family_members WHERE family_id = $1 AND user_id = $2)`
+
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, familyID, userID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func (r *repository) GetUserFamilies(ctx context.Context, userID string) ([]Family, error) {
