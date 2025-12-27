@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     BASE: '/api/families',
     BY_ID: (id: string) => `/api/families/${id}`,
     JOIN: (id: string) => `/api/families/${id}/join`,
+    MEMBERS: (familyId: string) => `/api/families/${familyId}/members`,
     CHILDREN: (familyId: string) => `/api/families/${familyId}/children`,
   },
   // Feedings

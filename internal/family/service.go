@@ -15,6 +15,7 @@ type Service interface {
 	GetUserFamilies(ctx context.Context, userID string) ([]FamilyWithChildren, error)
 
 	// Members
+	GetFamilyMembers(ctx context.Context, familyID string) ([]MemberWithUser, error)
 	InviteMember(ctx context.Context, familyID string, req *InviteRequest) error
 	JoinFamily(ctx context.Context, familyID, userID string) (*Family, error)
 	RemoveMember(ctx context.Context, familyID, userID string) error
@@ -97,6 +98,17 @@ func (s *service) GetUserFamilies(ctx context.Context, userID string) ([]FamilyW
 		}
 	}
 	return result, nil
+}
+
+func (s *service) GetFamilyMembers(ctx context.Context, familyID string) ([]MemberWithUser, error) {
+	members, err := s.repo.GetFamilyMembersWithUsers(ctx, familyID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get family members: %w", err)
+	}
+	if members == nil {
+		return []MemberWithUser{}, nil
+	}
+	return members, nil
 }
 
 func (s *service) InviteMember(ctx context.Context, familyID string, req *InviteRequest) error {

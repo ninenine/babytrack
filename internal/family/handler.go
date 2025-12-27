@@ -19,6 +19,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("", h.createFamily)
 	rg.GET("/:familyId", h.getFamily)
 
+	rg.GET("/:familyId/members", h.listMembers)
 	rg.POST("/:familyId/invite", h.inviteMember)
 	rg.POST("/:familyId/join", h.joinFamily)
 	rg.DELETE("/:familyId/members/:userId", h.removeMember)
@@ -63,6 +64,16 @@ func (h *Handler) getFamily(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, family)
+}
+
+func (h *Handler) listMembers(c *gin.Context) {
+	familyID := c.Param("familyId")
+	members, err := h.service.GetFamilyMembers(c.Request.Context(), familyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, members)
 }
 
 func (h *Handler) inviteMember(c *gin.Context) {

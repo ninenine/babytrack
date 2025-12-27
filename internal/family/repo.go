@@ -14,6 +14,7 @@ type Repository interface {
 
 	// Members
 	GetFamilyMembers(ctx context.Context, familyID string) ([]FamilyMember, error)
+	GetFamilyMembersWithUsers(ctx context.Context, familyID string) ([]MemberWithUser, error)
 	AddFamilyMember(ctx context.Context, member *FamilyMember) error
 	RemoveFamilyMember(ctx context.Context, familyID, userID string) error
 	GetUserFamilies(ctx context.Context, userID string) ([]Family, error)
@@ -100,6 +101,40 @@ func (r *repository) GetFamilyMembers(ctx context.Context, familyID string) ([]F
 		if err := rows.Scan(&m.ID, &m.FamilyID, &m.UserID, &m.Role, &m.CreatedAt); err != nil {
 			return nil, err
 		}
+		members = append(members, m)
+	}
+
+	return members, rows.Err()
+}
+
+func (r *repository) GetFamilyMembersWithUsers(ctx context.Context, familyID string) ([]MemberWithUser, error) {
+	query := `
+		SELECT fm.id, fm.user_id, u.name, u.email, u.avatar_url, fm.role, fm.created_at
+		FROM family_members fm
+		INNER JOIN users u ON fm.user_id = u.id
+		WHERE fm.family_id = $1
+		ORDER BY fm.created_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, familyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []MemberWithUser
+	for rows.Next() {
+		var m MemberWithUser
+		var avatarURL sql.NullString
+
+		if err := rows.Scan(&m.ID, &m.UserID, &m.Name, &m.Email, &avatarURL, &m.Role, &m.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		if avatarURL.Valid {
+			m.AvatarURL = avatarURL.String
+		}
+
 		members = append(members, m)
 	}
 
