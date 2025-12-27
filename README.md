@@ -280,17 +280,18 @@ Configuration is managed via YAML files in `configs/`:
 ```yaml
 server:
   port: 8080
+  base_url: http://localhost:8080
 
 database:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: postgres
-  name: family_tracker
+  dsn: postgres://family:family123@localhost:5432/family_tracker?sslmode=disable
 
 auth:
-  jwt_secret: your-secret-key
   google_client_id: your-google-client-id
+  google_client_secret: your-google-client-secret
+  jwt_secret: your-jwt-secret-change-this-in-production
+
+notifications:
+  enabled: false
 ```
 
 ## License
