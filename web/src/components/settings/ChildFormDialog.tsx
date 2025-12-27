@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { parseISO } from 'date-fns'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/ui/date-picker'
+import { DatePicker } from '@/components/shared/date-picker'
+import { toAPIDate, fromAPIDate } from '@/lib/dates'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -57,7 +57,7 @@ function getDefaultValues(): ChildFormValues {
 function childToFormValues(child: Child): ChildFormValues {
   return {
     name: child.name,
-    dateOfBirth: parseISO(child.dateOfBirth),
+    dateOfBirth: fromAPIDate(child.dateOfBirth),
     gender: child.gender || '',
   }
 }
@@ -86,7 +86,7 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
       const childData: Child = {
         id: child?.id || crypto.randomUUID(),
         name: values.name,
-        dateOfBirth: values.dateOfBirth.toISOString().split('T')[0],
+        dateOfBirth: toAPIDate(values.dateOfBirth),
         gender: values.gender || undefined,
         avatarUrl: child?.avatarUrl,
       }
@@ -143,6 +143,8 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
                       date={field.value}
                       onDateChange={field.onChange}
                       placeholder="Select date of birth"
+                      toDate={new Date()}
+                      captionLayout="dropdown"
                     />
                   </FormControl>
                   <FormMessage />

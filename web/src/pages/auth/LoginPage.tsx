@@ -74,7 +74,7 @@ export function LoginPage() {
           families.map((f) => ({
             id: f.id,
             name: f.name,
-            children: f.children.map((c) => ({
+            children: (f.children || []).map((c) => ({
               id: c.id,
               name: c.name,
               dateOfBirth: c.date_of_birth,

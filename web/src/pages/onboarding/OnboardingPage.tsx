@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DatePicker } from '@/components/shared/date-picker'
 import { useFamilyStore } from '@/stores/family.store'
 import { apiClient } from '@/lib/api-client'
 import { API_ENDPOINTS } from '@/lib/constants'
+import { toAPIDate } from '@/lib/dates'
 
 type Step = 'family' | 'child'
 
@@ -23,7 +25,7 @@ export function OnboardingPage() {
   const [familyName, setFamilyName] = useState('')
   const [familyId, setFamilyId] = useState<string | null>(null)
   const [childName, setChildName] = useState('')
-  const [childDob, setChildDob] = useState('')
+  const [childDob, setChildDob] = useState<Date | undefined>(undefined)
 
   async function handleCreateFamily(e: React.FormEvent) {
     e.preventDefault()
@@ -64,7 +66,7 @@ export function OnboardingPage() {
         date_of_birth: string
       }>(API_ENDPOINTS.FAMILIES.CHILDREN(familyId), {
         name: childName,
-        date_of_birth: childDob,
+        date_of_birth: toAPIDate(childDob),
       })
 
       // Set the family with the new child
@@ -180,15 +182,14 @@ export function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="childDob">Date of Birth</Label>
-                <Input
-                  id="childDob"
-                  type="date"
-                  value={childDob}
-                  onChange={(e) => setChildDob(e.target.value)}
-                  required
+                <Label>Date of Birth</Label>
+                <DatePicker
+                  date={childDob}
+                  onDateChange={setChildDob}
+                  placeholder="Select date of birth"
                   disabled={isLoading}
-                  max={new Date().toISOString().split('T')[0]}
+                  toDate={new Date()}
+                  captionLayout="dropdown"
                 />
               </div>
 

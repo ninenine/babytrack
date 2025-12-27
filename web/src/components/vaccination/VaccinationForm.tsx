@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { addMonths } from 'date-fns'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/ui/date-picker'
+import { DatePicker } from '@/components/shared/date-picker'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -144,7 +144,7 @@ export function VaccinationForm({ open, onOpenChange, vaccination }: Vaccination
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="dose"

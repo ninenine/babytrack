@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { addDays } from 'date-fns'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { DateTimePicker } from '@/components/ui/datetime-picker'
+import { DateTimePicker } from '@/components/shared/datetime-picker'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -219,7 +219,7 @@ export function AppointmentForm({ open, onOpenChange, appointment }: Appointment
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="scheduledAt"

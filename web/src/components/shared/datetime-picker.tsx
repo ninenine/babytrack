@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { CalendarIcon, Clock } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { getTimezoneAbbr } from '@/lib/dates'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
@@ -18,18 +19,22 @@ interface DateTimePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  /** Show timezone abbreviation in the display */
+  showTimezone?: boolean
 }
 
 export function DateTimePicker({
   date,
   onDateChange,
-  placeholder = 'Pick date and time',
+  placeholder = 'Pick date & time',
   disabled,
   className,
+  showTimezone = true,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
 
   const timeValue = date ? format(date, 'HH:mm') : ''
+  const tzAbbr = getTimezoneAbbr()
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!selectedDate) {
@@ -39,10 +44,10 @@ export function DateTimePicker({
 
     // Preserve the existing time if we have one, otherwise use current time
     if (date) {
-      selectedDate.setHours(date.getHours(), date.getMinutes())
+      selectedDate.setHours(date.getHours(), date.getMinutes(), 0, 0)
     } else {
       const now = new Date()
-      selectedDate.setHours(now.getHours(), now.getMinutes())
+      selectedDate.setHours(now.getHours(), now.getMinutes(), 0, 0)
     }
     onDateChange(selectedDate)
   }
@@ -52,9 +57,14 @@ export function DateTimePicker({
     if (isNaN(hours) || isNaN(minutes)) return
 
     const newDate = date ? new Date(date) : new Date()
-    newDate.setHours(hours, minutes)
+    newDate.setHours(hours, minutes, 0, 0)
     onDateChange(newDate)
   }
+
+  // Format: "Dec 27, 10:30 AM" or with timezone "Dec 27, 10:30 AM EAT"
+  const displayValue = date
+    ? `${format(date, 'MMM d, h:mm a')}${showTimezone ? ` ${tzAbbr}` : ''}`
+    : null
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -68,8 +78,10 @@ export function DateTimePicker({
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, 'PPP p') : <span>{placeholder}</span>}
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {displayValue || placeholder}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -77,6 +89,7 @@ export function DateTimePicker({
           mode="single"
           selected={date}
           onSelect={handleDateSelect}
+          defaultMonth={date}
           initialFocus
         />
         <div className="border-t p-3">
@@ -86,8 +99,9 @@ export function DateTimePicker({
               type="time"
               value={timeValue}
               onChange={handleTimeChange}
-              className="w-auto"
+              className="w-[120px]"
             />
+            <span className="text-xs text-muted-foreground">{tzAbbr}</span>
           </div>
         </div>
       </PopoverContent>

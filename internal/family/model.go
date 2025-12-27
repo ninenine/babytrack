@@ -9,6 +9,14 @@ type Family struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type FamilyWithChildren struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Children  []Child   `json:"children"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type FamilyMember struct {
 	ID        string    `json:"id"`
 	FamilyID  string    `json:"family_id"`
