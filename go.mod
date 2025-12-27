@@ -1,4 +1,4 @@
-module family-tracker
+module github.com/ninenine/babytrack
 
 go 1.25
 

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"family-tracker/internal/feeding"
-	"family-tracker/internal/medication"
-	"family-tracker/internal/notes"
-	"family-tracker/internal/sleep"
+	"github.com/ninenine/babytrack/internal/feeding"
+	"github.com/ninenine/babytrack/internal/medication"
+	"github.com/ninenine/babytrack/internal/notes"
+	"github.com/ninenine/babytrack/internal/sleep"
 )
 
 type EventType string

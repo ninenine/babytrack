@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"family-tracker/internal/app"
-	"family-tracker/internal/db"
+	"github.com/ninenine/babytrack/internal/app"
+	"github.com/ninenine/babytrack/internal/db"
 )
 
 func main() {

@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# Family Tracker Database Backup Script
+# BabyTrack Database Backup Script
 # Add to crontab for automated backups:
-# 0 2 * * * /opt/family-tracker/backup.sh
+# 0 2 * * * /opt/babytrack/backup.sh
 
 # Configuration
-DB_NAME="family_tracker"
-DB_USER="family_tracker"
-BACKUP_DIR="/opt/family-tracker/backups"
+DB_NAME="babytrack"
+DB_USER="babytrack"
+BACKUP_DIR="/opt/babytrack/backups"
 RETENTION_DAYS=30
 
 # Create backup directory

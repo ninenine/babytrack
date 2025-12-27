@@ -1,18 +1,18 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: family-tracker-db
+    container_name: babytrack-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: family
-      POSTGRES_PASSWORD: family123
-      POSTGRES_DB: family_tracker
+      POSTGRES_USER: babytrack
+      POSTGRES_PASSWORD: babytrack123
+      POSTGRES_DB: babytrack
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U family -d family_tracker"]
+      test: ["CMD-SHELL", "pg_isready -U babytrack -d babytrack"]
       interval: 5s
       timeout: 5s
       retries: 5
