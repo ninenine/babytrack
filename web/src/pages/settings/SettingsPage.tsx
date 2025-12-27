@@ -1,36 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useSessionStore } from '@/stores/session.store'
+import { useTheme } from '@/hooks/use-theme'
 import { ManageChildrenCard, InviteMemberCard } from '@/components/settings'
-
-function useTheme() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme')
-      if (stored === 'dark' || stored === 'light') return stored
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return 'light'
-  })
-
-  useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
-
-  return { theme, toggleTheme, isDark: theme === 'dark' }
-}
 
 export function SettingsPage() {
   const { user, clearSession } = useSessionStore()
@@ -121,6 +97,17 @@ export function SettingsPage() {
               onCheckedChange={handleNotificationsToggle}
             />
           </div>
+          {notificationsEnabled && (
+            <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-2">Notification Schedule</p>
+              <ul className="space-y-1">
+                <li>Medications: checked every 15 minutes</li>
+                <li>Appointments: checked every 30 minutes</li>
+                <li>Vaccinations: checked every 6 hours</li>
+                <li>Sleep insights: checked hourly, summary at 7 AM</li>
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -18,6 +18,7 @@ import (
 	"family-tracker/internal/jobs"
 	"family-tracker/internal/medication"
 	"family-tracker/internal/notes"
+	"family-tracker/internal/notifications"
 	"family-tracker/internal/sleep"
 	"family-tracker/internal/sync"
 	"family-tracker/internal/vaccination"
@@ -29,21 +30,23 @@ import (
 var uiFS embed.FS
 
 type Server struct {
-	cfg                  *Config
-	db                   *db.DB
-	router               *gin.Engine
-	httpServer           *http.Server
-	scheduler            *jobs.Scheduler
-	authService          auth.Service
-	authHandler          *auth.Handler
-	familyHandler        *family.Handler
-	feedingHandler       *feeding.Handler
-	sleepHandler         *sleep.Handler
-	medicationHandler    *medication.Handler
-	notesHandler         *notes.Handler
-	vaccinationHandler   *vaccination.Handler
-	appointmentHandler   *appointment.Handler
-	syncHandler          *sync.Handler
+	cfg                   *Config
+	db                    *db.DB
+	router                *gin.Engine
+	httpServer            *http.Server
+	scheduler             *jobs.Scheduler
+	notificationHub       *notifications.Hub
+	authService           auth.Service
+	authHandler           *auth.Handler
+	familyHandler         *family.Handler
+	feedingHandler        *feeding.Handler
+	sleepHandler          *sleep.Handler
+	medicationHandler     *medication.Handler
+	notesHandler          *notes.Handler
+	vaccinationHandler    *vaccination.Handler
+	appointmentHandler    *appointment.Handler
+	syncHandler           *sync.Handler
+	notificationsHandler  *notifications.Handler
 }
 
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
@@ -102,26 +105,35 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	syncService := sync.NewService(feedingService, sleepService, medicationService, notesService)
 	syncHandler := sync.NewHandler(syncService)
 
+	// Initialize notification hub
+	notificationHub := notifications.NewHub()
+	go notificationHub.Run()
+	notificationsHandler := notifications.NewHandler(notificationHub)
+
 	// Initialize scheduler and jobs
 	scheduler := jobs.NewScheduler()
-	scheduler.Register(jobs.NewMedicationReminderJob(medicationService))
-	scheduler.Register(jobs.NewSleepAnalyticsJob(sleepService))
+	scheduler.Register(jobs.NewMedicationReminderJob(medicationService, notificationHub))
+	scheduler.Register(jobs.NewVaccinationReminderJob(vaccinationService, notificationHub))
+	scheduler.Register(jobs.NewAppointmentReminderJob(appointmentService, notificationHub))
+	scheduler.Register(jobs.NewSleepAnalyticsJob(sleepService).WithNotificationHub(notificationHub))
 
 	s := &Server{
-		cfg:                cfg,
-		db:                 database,
-		router:             gin.New(),
-		scheduler:          scheduler,
-		authService:        authService,
-		authHandler:        authHandler,
-		familyHandler:      familyHandler,
-		feedingHandler:     feedingHandler,
-		sleepHandler:       sleepHandler,
-		medicationHandler:  medicationHandler,
-		notesHandler:       notesHandler,
-		vaccinationHandler: vaccinationHandler,
-		appointmentHandler: appointmentHandler,
-		syncHandler:        syncHandler,
+		cfg:                  cfg,
+		db:                   database,
+		router:               gin.New(),
+		scheduler:            scheduler,
+		notificationHub:      notificationHub,
+		authService:          authService,
+		authHandler:          authHandler,
+		familyHandler:        familyHandler,
+		feedingHandler:       feedingHandler,
+		sleepHandler:         sleepHandler,
+		medicationHandler:    medicationHandler,
+		notesHandler:         notesHandler,
+		vaccinationHandler:   vaccinationHandler,
+		appointmentHandler:   appointmentHandler,
+		syncHandler:          syncHandler,
+		notificationsHandler: notificationsHandler,
 	}
 
 	s.setupMiddleware()
