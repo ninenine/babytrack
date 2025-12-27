@@ -1,10 +1,13 @@
 import { Outlet } from 'react-router-dom'
 import { TopNavbar } from './top-navbar'
 import { BottomNav } from './bottom-nav'
-import { useMobile } from '@/hooks'
+import { useMobile, useNotifications } from '@/hooks'
 
 export function AppShell() {
   const isMobile = useMobile()
+
+  // Connect to SSE notifications when the app shell mounts
+  useNotifications()
 
   return (
     <div className="min-h-screen bg-background">

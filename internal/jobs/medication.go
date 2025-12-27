@@ -2,21 +2,26 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
 	"family-tracker/internal/medication"
+	"family-tracker/internal/notifications"
+
+	"github.com/google/uuid"
 )
 
-// MedicationReminderJob checks for medications that are due and logs reminders.
-// In a production system, this would integrate with a notification service.
+// MedicationReminderJob checks for medications that are due and sends notifications.
 type MedicationReminderJob struct {
 	medicationService medication.Service
+	notificationHub   *notifications.Hub
 }
 
-func NewMedicationReminderJob(medicationService medication.Service) *MedicationReminderJob {
+func NewMedicationReminderJob(medicationService medication.Service, hub *notifications.Hub) *MedicationReminderJob {
 	return &MedicationReminderJob{
 		medicationService: medicationService,
+		notificationHub:   hub,
 	}
 }
 
@@ -54,7 +59,18 @@ func (j *MedicationReminderJob) Run(ctx context.Context) error {
 			dueCount++
 			log.Printf("[MedicationReminderJob] Medication due: %s (Child: %s, Frequency: %s)",
 				med.Name, med.ChildID, med.Frequency)
-			// TODO: In production, send notification via push/email service
+
+			// Broadcast notification to connected clients
+			if j.notificationHub != nil && j.notificationHub.ClientCount() > 0 {
+				j.notificationHub.Broadcast(notifications.Event{
+					ID:        uuid.New().String(),
+					Type:      notifications.EventMedicationDue,
+					Title:     "Medication Due",
+					Message:   fmt.Sprintf("%s is due", med.Name),
+					ChildID:   med.ChildID,
+					Timestamp: now,
+				})
+			}
 		}
 	}
 

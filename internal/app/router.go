@@ -49,6 +49,10 @@ func (s *Server) setupRoutes() {
 			// Sync routes
 			syncGroup := protected.Group("/sync")
 			s.syncHandler.RegisterRoutes(syncGroup)
+
+			// Notifications routes (SSE)
+			notificationsGroup := protected.Group("/notifications")
+			s.notificationsHandler.RegisterRoutes(notificationsGroup)
 		}
 	}
 
