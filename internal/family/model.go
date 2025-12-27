@@ -49,3 +49,14 @@ type AddChildRequest struct {
 type InviteRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
+
+// MemberWithUser includes user details for API responses
+type MemberWithUser struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	AvatarURL string    `json:"avatar_url,omitempty"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"joined_at"`
+}

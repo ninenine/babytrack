@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Copy, Mail, UserPlus, Check, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Copy, Mail, UserPlus, Check, Trash2, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -26,30 +26,52 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useFamilyStore } from '@/stores/family.store'
 import { useSessionStore } from '@/stores/session.store'
+import { apiClient } from '@/lib/api-client'
+import { API_ENDPOINTS } from '@/lib/constants'
 
 interface FamilyMember {
   id: string
+  user_id: string
   name: string
   email: string
-  role: 'owner' | 'admin' | 'member'
-  status: 'active' | 'pending'
+  avatar_url?: string
+  role: 'admin' | 'member'
+  joined_at: string
 }
-
-// Mock data - in a real app this would come from the API
-const mockMembers: FamilyMember[] = [
-  { id: '1', name: 'You', email: 'you@example.com', role: 'owner', status: 'active' },
-]
 
 export function InviteMemberCard() {
   const { currentFamily } = useFamilyStore()
   const { user } = useSessionStore()
+  const [members, setMembers] = useState<FamilyMember[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [isInviting, setIsInviting] = useState(false)
   const [copied, setCopied] = useState(false)
   const [removingMember, setRemovingMember] = useState<FamilyMember | null>(null)
 
-  // Generate an invite link (mock)
+  // Fetch family members
+  useEffect(() => {
+    if (!currentFamily?.id) return
+
+    const fetchMembers = async () => {
+      setIsLoading(true)
+      try {
+        const { data } = await apiClient.get<FamilyMember[]>(
+          API_ENDPOINTS.FAMILIES.MEMBERS(currentFamily.id)
+        )
+        setMembers(data || [])
+      } catch (err) {
+        console.error('Failed to fetch family members:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMembers()
+  }, [currentFamily?.id])
+
+  // Generate an invite link
   const inviteLink = `${window.location.origin}/invite/${currentFamily?.id || 'family'}`
 
   const handleCopyLink = async () => {
@@ -74,27 +96,20 @@ export function InviteMemberCard() {
     }
   }
 
-  const handleRemoveMember = () => {
-    if (removingMember) {
-      // TODO: Call API to remove member
-      console.log('Removing member:', removingMember.id)
+  const handleRemoveMember = async () => {
+    if (!removingMember || !currentFamily) return
+
+    try {
+      await apiClient.delete(
+        `/api/families/${currentFamily.id}/members/${removingMember.user_id}`
+      )
+      setMembers((prev) => prev.filter((m) => m.id !== removingMember.id))
+    } catch (err) {
+      console.error('Failed to remove member:', err)
+    } finally {
       setRemovingMember(null)
     }
   }
-
-  // Build members list with current user
-  const members: FamilyMember[] = user
-    ? [
-        {
-          id: user.id,
-          name: user.name || 'You',
-          email: user.email || '',
-          role: 'owner',
-          status: 'active',
-        },
-        // Add mock pending invites for demo
-      ]
-    : mockMembers
 
   return (
     <>
@@ -115,51 +130,57 @@ export function InviteMemberCard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>
-                      {member.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      {member.name}
-                      {member.id === user?.id && (
-                        <span className="text-xs text-muted-foreground">(you)</span>
-                      )}
-                      <Badge
-                        variant={member.role === 'owner' ? 'default' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {member.role}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {member.email}
-                      {member.status === 'pending' && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          Pending
+            {isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : members.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                No family members yet
+              </div>
+            ) : (
+              members.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-3 rounded-lg border"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={member.avatar_url} alt={member.name} />
+                      <AvatarFallback>
+                        {member.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        {member.name}
+                        {member.user_id === user?.id && (
+                          <span className="text-xs text-muted-foreground">(you)</span>
+                        )}
+                        <Badge
+                          variant={member.role === 'admin' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {member.role}
                         </Badge>
-                      )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {member.email}
+                      </div>
                     </div>
                   </div>
+                  {member.user_id !== user?.id && member.role !== 'admin' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setRemovingMember(member)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-                {member.id !== user?.id && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setRemovingMember(member)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Invite Link Section */}
