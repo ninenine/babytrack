@@ -16,6 +16,7 @@ type Service interface {
 
 	// Members
 	InviteMember(ctx context.Context, familyID string, req *InviteRequest) error
+	JoinFamily(ctx context.Context, familyID, userID string) (*Family, error)
 	RemoveMember(ctx context.Context, familyID, userID string) error
 
 	// Children
@@ -82,6 +83,41 @@ func (s *service) GetUserFamilies(ctx context.Context, userID string) ([]Family,
 func (s *service) InviteMember(ctx context.Context, familyID string, req *InviteRequest) error {
 	// TODO: implement email invite
 	return fmt.Errorf("not implemented")
+}
+
+func (s *service) JoinFamily(ctx context.Context, familyID, userID string) (*Family, error) {
+	// Check if family exists
+	family, err := s.repo.GetFamilyByID(ctx, familyID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get family: %w", err)
+	}
+	if family == nil {
+		return nil, fmt.Errorf("family not found")
+	}
+
+	// Check if user is already a member
+	isMember, err := s.repo.IsMember(ctx, familyID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check membership: %w", err)
+	}
+	if isMember {
+		return family, nil // Already a member, just return the family
+	}
+
+	// Add user as member
+	member := &FamilyMember{
+		ID:        generateID(),
+		FamilyID:  familyID,
+		UserID:    userID,
+		Role:      "member",
+		CreatedAt: time.Now(),
+	}
+
+	if err := s.repo.AddFamilyMember(ctx, member); err != nil {
+		return nil, fmt.Errorf("failed to join family: %w", err)
+	}
+
+	return family, nil
 }
 
 func (s *service) RemoveMember(ctx context.Context, familyID, userID string) error {
