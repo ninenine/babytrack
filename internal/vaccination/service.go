@@ -115,8 +115,23 @@ func (s *service) GetSchedule() []VaccinationSchedule {
 }
 
 func (s *service) GenerateScheduleForChild(ctx context.Context, childID string, birthDate string) ([]Vaccination, error) {
-	// Parse birth date
-	birth, err := time.Parse("2006-01-02", birthDate)
+	// Parse birth date (try multiple formats)
+	var birth time.Time
+	var err error
+
+	formats := []string{
+		"2006-01-02",
+		time.RFC3339,
+		"2006-01-02T15:04:05Z07:00",
+	}
+
+	for _, format := range formats {
+		birth, err = time.Parse(format, birthDate)
+		if err == nil {
+			break
+		}
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("invalid birth date format: %w", err)
 	}
@@ -126,8 +141,8 @@ func (s *service) GenerateScheduleForChild(ctx context.Context, childID string, 
 	var vaccinations []Vaccination
 
 	for _, sched := range schedule {
-		// Calculate scheduled date based on age in months
-		scheduledAt := birth.AddDate(0, sched.AgeMonths, 0)
+		// Calculate scheduled date based on age in weeks (more accurate for infant schedule)
+		scheduledAt := birth.AddDate(0, 0, sched.AgeWeeks*7)
 
 		// Only create future vaccinations or ones due in the past 30 days
 		if scheduledAt.After(now.AddDate(0, 0, -30)) {

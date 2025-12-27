@@ -22,7 +22,9 @@ type VaccinationSchedule struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	AgeMonths   int    `json:"age_months"` // recommended age in months
+	AgeWeeks    int    `json:"age_weeks"`  // recommended age in weeks (0 = birth)
+	AgeMonths   int    `json:"age_months"` // recommended age in months (for display)
+	AgeLabel    string `json:"age_label"`  // human-readable age (e.g., "Birth", "6 weeks")
 	Dose        int    `json:"dose"`
 }
 

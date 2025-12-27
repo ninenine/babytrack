@@ -4,13 +4,29 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useSessionStore } from '@/stores/session.store'
 import { useTheme } from '@/hooks/use-theme'
+import { useQueryClient } from '@tanstack/react-query'
+import { db } from '@/db/dexie'
+import { toast } from 'sonner'
 import { ManageChildrenCard, InviteMemberCard } from '@/components/settings'
 
 export function SettingsPage() {
   const { user, clearSession } = useSessionStore()
   const { isDark, toggleTheme } = useTheme()
+  const queryClient = useQueryClient()
+  const [isClearing, setIsClearing] = useState(false)
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem('notifications') === 'true'
   })
@@ -30,6 +46,33 @@ export function SettingsPage() {
     } else {
       setNotificationsEnabled(false)
       localStorage.setItem('notifications', 'false')
+    }
+  }
+
+  const handleClearAndSync = async () => {
+    setIsClearing(true)
+    try {
+      // Clear all tables in the local database
+      await Promise.all([
+        db.feedings.clear(),
+        db.sleep.clear(),
+        db.medications.clear(),
+        db.medicationLogs.clear(),
+        db.notes.clear(),
+        db.vaccinations.clear(),
+        db.appointments.clear(),
+        db.pendingEvents.clear(),
+      ])
+
+      // Invalidate all queries to trigger a fresh sync from server
+      await queryClient.invalidateQueries()
+
+      toast.success('Local data cleared and syncing from server')
+    } catch (error) {
+      toast.error('Failed to clear local data')
+      console.error('Clear and sync error:', error)
+    } finally {
+      setIsClearing(false)
     }
   }
 
@@ -108,6 +151,46 @@ export function SettingsPage() {
               </ul>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Data */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Data</CardTitle>
+          <CardDescription>Manage your local data</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Clear Local Data</Label>
+              <p className="text-sm text-muted-foreground">
+                Clear cached data and re-sync from server
+              </p>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={isClearing}>
+                  {isClearing ? 'Clearing...' : 'Clear & Sync'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear local data?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will clear all locally cached data and re-download everything from the server.
+                    Any unsynced changes will be lost.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAndSync}>
+                    Clear & Sync
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardContent>
       </Card>
 

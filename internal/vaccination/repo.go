@@ -271,45 +271,43 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 }
 
 func (r *repository) GetSchedule() []VaccinationSchedule {
-	// Standard CDC vaccination schedule for children
+	// Kenya Expanded Programme on Immunization (EPI) schedule
 	return []VaccinationSchedule{
 		// Birth
-		{ID: "hepb-1", Name: "Hepatitis B", Description: "First dose at birth", AgeMonths: 0, Dose: 1},
-		// 2 months
-		{ID: "hepb-2", Name: "Hepatitis B", Description: "Second dose", AgeMonths: 2, Dose: 2},
-		{ID: "dtap-1", Name: "DTaP", Description: "Diphtheria, Tetanus, Pertussis - First dose", AgeMonths: 2, Dose: 1},
-		{ID: "polio-1", Name: "Polio (IPV)", Description: "First dose", AgeMonths: 2, Dose: 1},
-		{ID: "hib-1", Name: "Hib", Description: "Haemophilus influenzae type b - First dose", AgeMonths: 2, Dose: 1},
-		{ID: "pcv-1", Name: "PCV13", Description: "Pneumococcal - First dose", AgeMonths: 2, Dose: 1},
-		{ID: "rv-1", Name: "Rotavirus", Description: "First dose", AgeMonths: 2, Dose: 1},
-		// 4 months
-		{ID: "dtap-2", Name: "DTaP", Description: "Second dose", AgeMonths: 4, Dose: 2},
-		{ID: "polio-2", Name: "Polio (IPV)", Description: "Second dose", AgeMonths: 4, Dose: 2},
-		{ID: "hib-2", Name: "Hib", Description: "Second dose", AgeMonths: 4, Dose: 2},
-		{ID: "pcv-2", Name: "PCV13", Description: "Second dose", AgeMonths: 4, Dose: 2},
-		{ID: "rv-2", Name: "Rotavirus", Description: "Second dose", AgeMonths: 4, Dose: 2},
+		{ID: "bcg-1", Name: "BCG", Description: "Bacillus Calmette-Guérin (Tuberculosis)", AgeWeeks: 0, AgeMonths: 0, AgeLabel: "Birth", Dose: 1},
+		{ID: "opv-0", Name: "OPV", Description: "Oral Polio Vaccine - Birth dose", AgeWeeks: 0, AgeMonths: 0, AgeLabel: "Birth", Dose: 0},
+		{ID: "hepb-1", Name: "Hepatitis B", Description: "Birth dose", AgeWeeks: 0, AgeMonths: 0, AgeLabel: "Birth", Dose: 1},
+
+		// 6 weeks
+		{ID: "penta-1", Name: "Pentavalent", Description: "DPT-HepB-Hib - First dose", AgeWeeks: 6, AgeMonths: 1, AgeLabel: "6 weeks", Dose: 1},
+		{ID: "opv-1", Name: "OPV", Description: "Oral Polio Vaccine - First dose", AgeWeeks: 6, AgeMonths: 1, AgeLabel: "6 weeks", Dose: 1},
+		{ID: "pcv-1", Name: "PCV", Description: "Pneumococcal - First dose", AgeWeeks: 6, AgeMonths: 1, AgeLabel: "6 weeks", Dose: 1},
+		{ID: "rv-1", Name: "Rotavirus", Description: "First dose", AgeWeeks: 6, AgeMonths: 1, AgeLabel: "6 weeks", Dose: 1},
+
+		// 10 weeks
+		{ID: "penta-2", Name: "Pentavalent", Description: "DPT-HepB-Hib - Second dose", AgeWeeks: 10, AgeMonths: 2, AgeLabel: "10 weeks", Dose: 2},
+		{ID: "opv-2", Name: "OPV", Description: "Oral Polio Vaccine - Second dose", AgeWeeks: 10, AgeMonths: 2, AgeLabel: "10 weeks", Dose: 2},
+		{ID: "pcv-2", Name: "PCV", Description: "Pneumococcal - Second dose", AgeWeeks: 10, AgeMonths: 2, AgeLabel: "10 weeks", Dose: 2},
+		{ID: "rv-2", Name: "Rotavirus", Description: "Second dose", AgeWeeks: 10, AgeMonths: 2, AgeLabel: "10 weeks", Dose: 2},
+
+		// 14 weeks
+		{ID: "penta-3", Name: "Pentavalent", Description: "DPT-HepB-Hib - Third dose", AgeWeeks: 14, AgeMonths: 3, AgeLabel: "14 weeks", Dose: 3},
+		{ID: "opv-3", Name: "OPV", Description: "Oral Polio Vaccine - Third dose", AgeWeeks: 14, AgeMonths: 3, AgeLabel: "14 weeks", Dose: 3},
+		{ID: "ipv-1", Name: "IPV", Description: "Inactivated Polio Vaccine", AgeWeeks: 14, AgeMonths: 3, AgeLabel: "14 weeks", Dose: 1},
+		{ID: "pcv-3", Name: "PCV", Description: "Pneumococcal - Third dose", AgeWeeks: 14, AgeMonths: 3, AgeLabel: "14 weeks", Dose: 3},
+
 		// 6 months
-		{ID: "hepb-3", Name: "Hepatitis B", Description: "Third dose", AgeMonths: 6, Dose: 3},
-		{ID: "dtap-3", Name: "DTaP", Description: "Third dose", AgeMonths: 6, Dose: 3},
-		{ID: "polio-3", Name: "Polio (IPV)", Description: "Third dose", AgeMonths: 6, Dose: 3},
-		{ID: "hib-3", Name: "Hib", Description: "Third dose (if needed)", AgeMonths: 6, Dose: 3},
-		{ID: "pcv-3", Name: "PCV13", Description: "Third dose", AgeMonths: 6, Dose: 3},
-		{ID: "rv-3", Name: "Rotavirus", Description: "Third dose (if needed)", AgeMonths: 6, Dose: 3},
-		{ID: "flu-1", Name: "Influenza", Description: "Annual flu shot (6+ months)", AgeMonths: 6, Dose: 1},
+		{ID: "vita-1", Name: "Vitamin A", Description: "First supplement", AgeWeeks: 26, AgeMonths: 6, AgeLabel: "6 months", Dose: 1},
+
+		// 9 months
+		{ID: "mr-1", Name: "Measles-Rubella", Description: "MR - First dose", AgeWeeks: 39, AgeMonths: 9, AgeLabel: "9 months", Dose: 1},
+		{ID: "yellow-fever-1", Name: "Yellow Fever", Description: "Single dose (endemic areas)", AgeWeeks: 39, AgeMonths: 9, AgeLabel: "9 months", Dose: 1},
+
 		// 12 months
-		{ID: "mmr-1", Name: "MMR", Description: "Measles, Mumps, Rubella - First dose", AgeMonths: 12, Dose: 1},
-		{ID: "varicella-1", Name: "Varicella", Description: "Chickenpox - First dose", AgeMonths: 12, Dose: 1},
-		{ID: "hepa-1", Name: "Hepatitis A", Description: "First dose", AgeMonths: 12, Dose: 1},
-		{ID: "pcv-4", Name: "PCV13", Description: "Fourth dose", AgeMonths: 12, Dose: 4},
-		{ID: "hib-4", Name: "Hib", Description: "Booster", AgeMonths: 12, Dose: 4},
-		// 15-18 months
-		{ID: "dtap-4", Name: "DTaP", Description: "Fourth dose", AgeMonths: 15, Dose: 4},
+		{ID: "vita-2", Name: "Vitamin A", Description: "Second supplement", AgeWeeks: 52, AgeMonths: 12, AgeLabel: "12 months", Dose: 2},
+
 		// 18 months
-		{ID: "hepa-2", Name: "Hepatitis A", Description: "Second dose", AgeMonths: 18, Dose: 2},
-		// 4-6 years
-		{ID: "dtap-5", Name: "DTaP", Description: "Fifth dose", AgeMonths: 48, Dose: 5},
-		{ID: "polio-4", Name: "Polio (IPV)", Description: "Fourth dose", AgeMonths: 48, Dose: 4},
-		{ID: "mmr-2", Name: "MMR", Description: "Second dose", AgeMonths: 48, Dose: 2},
-		{ID: "varicella-2", Name: "Varicella", Description: "Second dose", AgeMonths: 48, Dose: 2},
+		{ID: "mr-2", Name: "Measles-Rubella", Description: "MR - Second dose", AgeWeeks: 78, AgeMonths: 18, AgeLabel: "18 months", Dose: 2},
+		{ID: "vita-3", Name: "Vitamin A", Description: "Third supplement", AgeWeeks: 78, AgeMonths: 18, AgeLabel: "18 months", Dose: 3},
 	}
 }
