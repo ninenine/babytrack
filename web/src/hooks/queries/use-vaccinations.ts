@@ -289,9 +289,10 @@ export function useGenerateVaccinationSchedule() {
     mutationFn: async () => {
       if (!currentChild) throw new Error('No child selected')
 
-      const response = await apiClient.post<VaccinationResponse[]>('/api/vaccinations/schedule', {
-        child_id: currentChild.id,
-      })
+      const response = await apiClient.post<VaccinationResponse[]>(
+        `/api/vaccinations/generate/${currentChild.id}`,
+        { birth_date: currentChild.dateOfBirth }
+      )
 
       for (const vax of response.data) {
         await db.vaccinations.put(mapResponseToLocal(vax))
