@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Baby, LogOut, Settings, User } from 'lucide-react'
+import { LogOut, Settings, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -40,7 +40,7 @@ export function TopNavbar() {
       <div className="container max-w-4xl mx-auto flex h-14 items-center px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-semibold">
-          <Baby className="h-6 w-6 text-primary" />
+          <img src="/logo-64.png" alt="BabyTrack" className="h-7 w-7" />
           <span className="hidden sm:inline">BabyTrack</span>
         </Link>
 

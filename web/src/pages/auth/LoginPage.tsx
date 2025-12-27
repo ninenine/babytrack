@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Baby, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSessionStore } from '@/stores/session.store'
@@ -112,9 +112,7 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Baby className="h-10 w-10 text-primary" />
-            </div>
+            <img src="/logo-64.png" alt="BabyTrack" className="h-16 w-16" />
           </div>
           <CardTitle className="text-2xl">BabyTrack</CardTitle>
           <CardDescription>
