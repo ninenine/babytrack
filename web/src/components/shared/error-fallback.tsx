@@ -29,15 +29,8 @@ User Agent: ${navigator.userAgent}`
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea')
-      textarea.value = errorDetails
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      // Clipboard API failed - likely permissions issue
+      console.error('Failed to copy to clipboard')
     }
   }
 
