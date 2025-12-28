@@ -67,7 +67,10 @@ export function fromAPIDateTime(isoString: string): Date {
 export function fromAPIDate(dateString: string): Date {
   // If it's just a date (no T), parse as local date
   if (!dateString.includes('T')) {
-    const [year, month, day] = dateString.split('-').map(Number)
+    const parts = dateString.split('-').map(Number)
+    const year = parts[0] ?? 0
+    const month = parts[1] ?? 1
+    const day = parts[2] ?? 1
     return new Date(year, month - 1, day)
   }
   // Otherwise parse as ISO and extract just the date part in local timezone

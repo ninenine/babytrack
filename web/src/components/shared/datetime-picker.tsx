@@ -73,8 +73,10 @@ export function DateTimePicker({
   }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [hours, minutes] = e.target.value.split(':').map(Number)
-    if (isNaN(hours) || isNaN(minutes)) return
+    const parts = e.target.value.split(':').map(Number)
+    const hours = parts[0]
+    const minutes = parts[1]
+    if (hours === undefined || minutes === undefined || isNaN(hours) || isNaN(minutes)) return
 
     const newDate = date ? new Date(date) : new Date()
     newDate.setHours(hours, minutes, 0, 0)
