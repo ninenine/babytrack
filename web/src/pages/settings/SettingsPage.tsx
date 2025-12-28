@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -21,15 +21,24 @@ import { useQueryClient } from '@tanstack/react-query'
 import { db } from '@/db/dexie'
 import { toast } from 'sonner'
 import { ManageChildrenCard, InviteMemberCard } from '@/components/settings'
+import { API_ENDPOINTS } from '@/lib/constants'
 
 export function SettingsPage() {
   const { user, clearSession } = useSessionStore()
   const { isDark, toggleTheme } = useTheme()
   const queryClient = useQueryClient()
   const [isClearing, setIsClearing] = useState(false)
+  const [version, setVersion] = useState<string>('...')
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem('notifications') === 'true'
   })
+
+  useEffect(() => {
+    fetch(API_ENDPOINTS.VERSION)
+      .then((res) => res.json())
+      .then((data) => setVersion(data.version))
+      .catch(() => setVersion('unknown'))
+  }, [])
 
   const handleLogout = () => {
     clearSession()
@@ -200,7 +209,7 @@ export function SettingsPage() {
           <CardTitle>About</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          <p>BabyTrack v1.0.0</p>
+          <p>BabyTrack {version}</p>
           <p className="mt-1">Track your baby's activities with ease</p>
         </CardContent>
       </Card>
