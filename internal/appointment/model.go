@@ -23,7 +23,7 @@ type Appointment struct {
 	Duration    int             `json:"duration"` // in minutes
 	Notes       string          `json:"notes,omitempty"`
 	Completed   bool            `json:"completed"`
-	Canceled    bool            `json:"canceled"`
+	Cancelled   bool            `json:"cancelled"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }

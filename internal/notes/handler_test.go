@@ -1344,7 +1344,7 @@ func TestGet_EmptyID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	// Gin may redirect or handle this differently
-	// The test verifies the route behavior
+	// The test verifies the route behaviour
 	if w.Code == http.StatusNotFound {
 		t.Log("Empty ID path handled as 404, which is acceptable")
 	}

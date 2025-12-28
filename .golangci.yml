@@ -280,7 +280,7 @@ linters:
       threshold: 250
 
     misspell:
-      locale: US
+      locale: UK
 
     errorlint:
       errorf: true

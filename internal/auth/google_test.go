@@ -150,7 +150,7 @@ func TestGoogleOAuthClient_GetUserInfo_Success(t *testing.T) {
 }
 
 func TestGoogleTokenResponse_Structure(t *testing.T) {
-	// Test JSON marshaling/unmarshaling
+	// Test JSON marshalling/unmarshaling
 	jsonData := `{
 		"access_token": "test-access",
 		"token_type": "Bearer",

@@ -28,7 +28,7 @@ func (h *Handler) Stream(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(401, gin.H{"error": "unauthorized"})
+		c.JSON(401, gin.H{"error": "unauthorised"})
 		return
 	}
 

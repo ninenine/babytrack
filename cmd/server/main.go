@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// Initialize database
+	// Initialise database
 	database, err := db.New(cfg.Database.DSN)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)

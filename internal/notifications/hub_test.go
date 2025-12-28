@@ -14,19 +14,19 @@ func TestNewHub(t *testing.T) {
 	}
 
 	if hub.clients == nil {
-		t.Error("NewHub() clients map should be initialized")
+		t.Error("NewHub() clients map should be initialised")
 	}
 
 	if hub.register == nil {
-		t.Error("NewHub() register channel should be initialized")
+		t.Error("NewHub() register channel should be initialised")
 	}
 
 	if hub.unregister == nil {
-		t.Error("NewHub() unregister channel should be initialized")
+		t.Error("NewHub() unregister channel should be initialised")
 	}
 
 	if hub.broadcast == nil {
-		t.Error("NewHub() broadcast channel should be initialized")
+		t.Error("NewHub() broadcast channel should be initialised")
 	}
 }
 

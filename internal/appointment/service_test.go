@@ -70,7 +70,7 @@ func (m *mockRepository) GetUpcoming(ctx context.Context, childID string, days i
 	endDate := now.AddDate(0, 0, days)
 
 	for _, apt := range m.appointments {
-		if apt.ChildID == childID && !apt.Completed && !apt.Canceled {
+		if apt.ChildID == childID && !apt.Completed && !apt.Cancelled {
 			if apt.ScheduledAt.After(now) && apt.ScheduledAt.Before(endDate) {
 				result = append(result, *apt)
 			}
@@ -256,7 +256,7 @@ func TestService_Cancel(t *testing.T) {
 
 	// Verify it's marked as canceled
 	apt, _ := svc.Get(context.Background(), created.ID)
-	if !apt.Canceled {
+	if !apt.Cancelled {
 		t.Error("Cancel() should set Canceled = true")
 	}
 }

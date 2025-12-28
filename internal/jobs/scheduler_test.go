@@ -47,7 +47,7 @@ func TestNewScheduler(t *testing.T) {
 	}
 
 	if scheduler.jobs == nil {
-		t.Error("NewScheduler() jobs should be initialized")
+		t.Error("NewScheduler() jobs should be initialised")
 	}
 
 	if scheduler.running {

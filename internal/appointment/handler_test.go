@@ -109,12 +109,12 @@ func sampleAppointment() *Appointment {
 		Type:        AppointmentTypeWellVisit,
 		Title:       "Annual Checkup",
 		Provider:    "Dr. Smith",
-		Location:    "123 Medical Center",
+		Location:    "123 Medical Centre",
 		ScheduledAt: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
 		Duration:    30,
-		Notes:       "Bring immunization records",
+		Notes:       "Bring immunisation records",
 		Completed:   false,
-		Canceled:    false,
+		Cancelled:   false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -127,10 +127,10 @@ func validRequestBody() *CreateAppointmentRequest {
 		Type:        AppointmentTypeWellVisit,
 		Title:       "Annual Checkup",
 		Provider:    "Dr. Smith",
-		Location:    "123 Medical Center",
+		Location:    "123 Medical Centre",
 		ScheduledAt: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
 		Duration:    30,
-		Notes:       "Bring immunization records",
+		Notes:       "Bring immunisation records",
 	}
 }
 

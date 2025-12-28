@@ -68,7 +68,7 @@ func TestHandler_RegisterRoutes(t *testing.T) {
 	}
 }
 
-func TestHandler_Stream_Unauthorized(t *testing.T) {
+func TestHandler_Stream_Unauthorised(t *testing.T) {
 	hub := setupTestHub()
 	router := setupRouter(hub)
 

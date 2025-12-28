@@ -270,7 +270,7 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 }
 
 func (r *repository) GetSchedule() []VaccinationSchedule {
-	// Kenya Expanded Program on Immunization (EPI) schedule
+	// Kenya Expanded Program on Immunisation (EPI) schedule
 	return []VaccinationSchedule{
 		// Birth
 		{ID: "bcg-1", Name: "BCG", Description: "Bacillus Calmette-Guérin (Tuberculosis)", AgeWeeks: 0, AgeMonths: 0, AgeLabel: "Birth", Dose: 1},

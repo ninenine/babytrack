@@ -21,7 +21,7 @@ func newMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 
 var appointmentColumns = []string{
 	"id", "child_id", "type", "title", "provider", "location", "scheduled_at",
-	"duration", "notes", "completed", "canceled", "created_at", "updated_at",
+	"duration", "notes", "completed", "cancelled", "created_at", "updated_at",
 }
 
 func TestRepository_GetByID(t *testing.T) {
@@ -222,14 +222,14 @@ func TestRepository_Create(t *testing.T) {
 		Duration:    60,
 		Notes:       "New notes",
 		Completed:   false,
-		Canceled:    false,
+		Cancelled:   false,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
 
 	mock.ExpectExec("INSERT INTO appointments").
 		WithArgs(apt.ID, apt.ChildID, apt.Type, apt.Title, &apt.Provider, &apt.Location, apt.ScheduledAt,
-			apt.Duration, &apt.Notes, apt.Completed, apt.Canceled, apt.CreatedAt, apt.UpdatedAt).
+			apt.Duration, &apt.Notes, apt.Completed, apt.Cancelled, apt.CreatedAt, apt.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := repo.Create(context.Background(), apt)
@@ -261,7 +261,7 @@ func TestRepository_Create_NoOptionalFields(t *testing.T) {
 
 	mock.ExpectExec("INSERT INTO appointments").
 		WithArgs(apt.ID, apt.ChildID, apt.Type, apt.Title, nil, nil, apt.ScheduledAt,
-			apt.Duration, nil, apt.Completed, apt.Canceled, apt.CreatedAt, apt.UpdatedAt).
+			apt.Duration, nil, apt.Completed, apt.Cancelled, apt.CreatedAt, apt.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := repo.Create(context.Background(), apt)
@@ -292,7 +292,7 @@ func TestRepository_Create_Error(t *testing.T) {
 
 	mock.ExpectExec("INSERT INTO appointments").
 		WithArgs(apt.ID, apt.ChildID, apt.Type, apt.Title, nil, nil, apt.ScheduledAt,
-			apt.Duration, nil, apt.Completed, apt.Canceled, apt.CreatedAt, apt.UpdatedAt).
+			apt.Duration, nil, apt.Completed, apt.Cancelled, apt.CreatedAt, apt.UpdatedAt).
 		WillReturnError(errors.New("duplicate key"))
 
 	err := repo.Create(context.Background(), apt)
@@ -321,13 +321,13 @@ func TestRepository_Update(t *testing.T) {
 		Duration:    45,
 		Notes:       "Updated notes",
 		Completed:   true,
-		Canceled:    false,
+		Cancelled:   false,
 		UpdatedAt:   now,
 	}
 
 	mock.ExpectExec("UPDATE appointments SET type").
 		WithArgs(apt.ID, apt.Type, apt.Title, &apt.Provider, &apt.Location, apt.ScheduledAt,
-			apt.Duration, &apt.Notes, apt.Completed, apt.Canceled, apt.UpdatedAt).
+			apt.Duration, &apt.Notes, apt.Completed, apt.Cancelled, apt.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	err := repo.Update(context.Background(), apt)
@@ -356,7 +356,7 @@ func TestRepository_Update_Error(t *testing.T) {
 
 	mock.ExpectExec("UPDATE appointments SET type").
 		WithArgs(apt.ID, apt.Type, apt.Title, nil, nil, apt.ScheduledAt,
-			apt.Duration, nil, apt.Completed, apt.Canceled, apt.UpdatedAt).
+			apt.Duration, nil, apt.Completed, apt.Cancelled, apt.UpdatedAt).
 		WillReturnError(errors.New("database error"))
 
 	err := repo.Update(context.Background(), apt)
