@@ -33,16 +33,9 @@ repos:
         files: \.go$
         pass_filenames: false
 
-      - id: go-fmt
-        name: Go Format
-        entry: gofmt -w
-        language: system
-        files: \.go$
-        pass_filenames: true
-
-      - id: go-vet
-        name: Go Vet
-        entry: bash -c 'go vet ./...'
+      - id: golangci-lint
+        name: Golangci-lint (Go linting)
+        entry: golangci-lint run --fix
         language: system
         files: \.go$
         pass_filenames: false

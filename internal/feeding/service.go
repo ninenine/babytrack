@@ -92,6 +92,6 @@ func (s *service) GetLastFeeding(ctx context.Context, childID string) (*Feeding,
 
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	rand.Read(b) //nolint:errcheck // crypto/rand.Read rarely fails
 	return hex.EncodeToString(b)
 }

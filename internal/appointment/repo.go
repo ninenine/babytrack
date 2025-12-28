@@ -28,7 +28,7 @@ func NewRepository(db *sql.DB) Repository {
 func (r *repository) GetByID(ctx context.Context, id string) (*Appointment, error) {
 	query := `
 		SELECT id, child_id, type, title, provider, location, scheduled_at,
-		       duration, notes, completed, cancelled, created_at, updated_at
+		       duration, notes, completed, canceled, created_at, updated_at
 		FROM appointments
 		WHERE id = $1
 	`
@@ -38,7 +38,7 @@ func (r *repository) GetByID(ctx context.Context, id string) (*Appointment, erro
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&a.ID, &a.ChildID, &a.Type, &a.Title, &provider, &location, &a.ScheduledAt,
-		&a.Duration, &notes, &a.Completed, &a.Cancelled, &a.CreatedAt, &a.UpdatedAt,
+		&a.Duration, &notes, &a.Completed, &a.Canceled, &a.CreatedAt, &a.UpdatedAt,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -64,7 +64,7 @@ func (r *repository) GetByID(ctx context.Context, id string) (*Appointment, erro
 func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]Appointment, error) {
 	query := `
 		SELECT id, child_id, type, title, provider, location, scheduled_at,
-		       duration, notes, completed, cancelled, created_at, updated_at
+		       duration, notes, completed, canceled, created_at, updated_at
 		FROM appointments
 		WHERE 1=1
 	`
@@ -84,7 +84,7 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 	}
 
 	if filter.UpcomingOnly {
-		query += fmt.Sprintf(` AND completed = false AND cancelled = false AND scheduled_at >= $%d`, argIndex)
+		query += fmt.Sprintf(` AND completed = false AND canceled = false AND scheduled_at >= $%d`, argIndex)
 		args = append(args, time.Now())
 		argIndex++
 	}
@@ -98,7 +98,6 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 	if filter.EndDate != nil {
 		query += fmt.Sprintf(` AND scheduled_at <= $%d`, argIndex)
 		args = append(args, *filter.EndDate)
-		argIndex++
 	}
 
 	query += ` ORDER BY scheduled_at ASC`
@@ -107,7 +106,7 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var appointments []Appointment
 	for rows.Next() {
@@ -116,7 +115,7 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 
 		if err := rows.Scan(
 			&a.ID, &a.ChildID, &a.Type, &a.Title, &provider, &location, &a.ScheduledAt,
-			&a.Duration, &notes, &a.Completed, &a.Cancelled, &a.CreatedAt, &a.UpdatedAt,
+			&a.Duration, &notes, &a.Completed, &a.Canceled, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -144,7 +143,7 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 func (r *repository) Create(ctx context.Context, apt *Appointment) error {
 	query := `
 		INSERT INTO appointments (id, child_id, type, title, provider, location, scheduled_at,
-		                          duration, notes, completed, cancelled, created_at, updated_at)
+		                          duration, notes, completed, canceled, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
@@ -161,7 +160,7 @@ func (r *repository) Create(ctx context.Context, apt *Appointment) error {
 
 	_, err := r.db.ExecContext(ctx, query,
 		apt.ID, apt.ChildID, apt.Type, apt.Title, provider, location, apt.ScheduledAt,
-		apt.Duration, notes, apt.Completed, apt.Cancelled, apt.CreatedAt, apt.UpdatedAt,
+		apt.Duration, notes, apt.Completed, apt.Canceled, apt.CreatedAt, apt.UpdatedAt,
 	)
 
 	return err
@@ -171,7 +170,7 @@ func (r *repository) Update(ctx context.Context, apt *Appointment) error {
 	query := `
 		UPDATE appointments
 		SET type = $2, title = $3, provider = $4, location = $5, scheduled_at = $6,
-		    duration = $7, notes = $8, completed = $9, cancelled = $10, updated_at = $11
+		    duration = $7, notes = $8, completed = $9, canceled = $10, updated_at = $11
 		WHERE id = $1
 	`
 
@@ -188,7 +187,7 @@ func (r *repository) Update(ctx context.Context, apt *Appointment) error {
 
 	_, err := r.db.ExecContext(ctx, query,
 		apt.ID, apt.Type, apt.Title, provider, location, apt.ScheduledAt,
-		apt.Duration, notes, apt.Completed, apt.Cancelled, apt.UpdatedAt,
+		apt.Duration, notes, apt.Completed, apt.Canceled, apt.UpdatedAt,
 	)
 
 	return err
@@ -203,11 +202,11 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) ([]Appointment, error) {
 	query := `
 		SELECT id, child_id, type, title, provider, location, scheduled_at,
-		       duration, notes, completed, cancelled, created_at, updated_at
+		       duration, notes, completed, canceled, created_at, updated_at
 		FROM appointments
 		WHERE child_id = $1
 		  AND completed = false
-		  AND cancelled = false
+		  AND canceled = false
 		  AND scheduled_at >= $2
 		  AND scheduled_at <= $3
 		ORDER BY scheduled_at ASC
@@ -220,7 +219,7 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var appointments []Appointment
 	for rows.Next() {
@@ -229,7 +228,7 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 
 		if err := rows.Scan(
 			&a.ID, &a.ChildID, &a.Type, &a.Title, &provider, &location, &a.ScheduledAt,
-			&a.Duration, &notes, &a.Completed, &a.Cancelled, &a.CreatedAt, &a.UpdatedAt,
+			&a.Duration, &notes, &a.Completed, &a.Canceled, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

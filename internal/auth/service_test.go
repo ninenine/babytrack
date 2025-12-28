@@ -208,3 +208,100 @@ func TestService_HandleGoogleCallback_InvalidState(t *testing.T) {
 		t.Error("HandleGoogleCallback() should return error for invalid state")
 	}
 }
+
+func TestService_GetGoogleAuthURL(t *testing.T) {
+	repo := newMockRepository()
+	jwtManager := NewJWTManager("test-secret", time.Hour)
+	googleClient := NewGoogleOAuthClient(&GoogleOAuthConfig{
+		ClientID:     "test-client-id",
+		ClientSecret: "test-client-secret",
+		RedirectURL:  "http://localhost/callback",
+	})
+	svc := NewService(repo, googleClient, jwtManager)
+
+	url, state := svc.GetGoogleAuthURL()
+
+	if url == "" {
+		t.Error("GetGoogleAuthURL() returned empty URL")
+	}
+
+	if state == "" {
+		t.Error("GetGoogleAuthURL() returned empty state")
+	}
+
+	// URL should contain the state
+	if !containsSubstring(url, state) {
+		t.Error("GetGoogleAuthURL() URL should contain state")
+	}
+}
+
+func TestService_GetGoogleAuthURL_GeneratesUniqueStates(t *testing.T) {
+	repo := newMockRepository()
+	jwtManager := NewJWTManager("test-secret", time.Hour)
+	googleClient := NewGoogleOAuthClient(&GoogleOAuthConfig{
+		ClientID:     "test-client-id",
+		ClientSecret: "test-client-secret",
+		RedirectURL:  "http://localhost/callback",
+	})
+	svc := NewService(repo, googleClient, jwtManager)
+
+	_, state1 := svc.GetGoogleAuthURL()
+	_, state2 := svc.GetGoogleAuthURL()
+
+	if state1 == state2 {
+		t.Error("GetGoogleAuthURL() should generate unique states")
+	}
+}
+
+func TestService_HandleGoogleCallback_ExpiredState(t *testing.T) {
+	repo := newMockRepository()
+	jwtManager := NewJWTManager("test-secret", time.Hour)
+	svc := NewService(repo, nil, jwtManager)
+
+	// Access the internal service to manually add an expired state
+	internalSvc := svc.(*service)
+	expiredState := "expired-state-123"
+	internalSvc.states[expiredState] = time.Now().Add(-1 * time.Hour) // Expired 1 hour ago
+
+	_, err := svc.HandleGoogleCallback(context.Background(), "code", expiredState)
+	if err == nil {
+		t.Error("HandleGoogleCallback() should return error for expired state")
+	}
+
+	expectedErr := "invalid or expired state"
+	if err.Error() != expectedErr {
+		t.Errorf("HandleGoogleCallback() error = %v, want %v", err.Error(), expectedErr)
+	}
+}
+
+func TestService_HandleGoogleCallback_ValidState_CodeExchangeFails(t *testing.T) {
+	repo := newMockRepository()
+	jwtManager := NewJWTManager("test-secret", time.Hour)
+	googleClient := NewGoogleOAuthClient(&GoogleOAuthConfig{
+		ClientID:     "test-client-id",
+		ClientSecret: "test-client-secret",
+		RedirectURL:  "http://localhost/callback",
+	})
+	svc := NewService(repo, googleClient, jwtManager)
+
+	// Get a valid state
+	_, state := svc.GetGoogleAuthURL()
+
+	// Try callback with invalid code (will fail because Google returns error)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := svc.HandleGoogleCallback(ctx, "invalid-code", state)
+	if err == nil {
+		t.Error("HandleGoogleCallback() should return error when code exchange fails")
+	}
+}
+
+func containsSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

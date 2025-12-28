@@ -75,16 +75,16 @@ func (s *service) HandleGoogleCallback(ctx context.Context, code, state string) 
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		if err := s.repo.CreateUser(ctx, user); err != nil {
-			return nil, fmt.Errorf("failed to create user: %w", err)
+		if createErr := s.repo.CreateUser(ctx, user); createErr != nil {
+			return nil, fmt.Errorf("failed to create user: %w", createErr)
 		}
 	} else {
 		// Update existing user info
 		user.Name = userInfo.Name
 		user.AvatarURL = userInfo.Picture
 		user.UpdatedAt = time.Now()
-		if err := s.repo.UpdateUser(ctx, user); err != nil {
-			return nil, fmt.Errorf("failed to update user: %w", err)
+		if updateErr := s.repo.UpdateUser(ctx, user); updateErr != nil {
+			return nil, fmt.Errorf("failed to update user: %w", updateErr)
 		}
 	}
 
@@ -146,12 +146,12 @@ func (s *service) GetUserByID(ctx context.Context, id string) (*User, error) {
 
 func generateState() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	rand.Read(b) //nolint:errcheck // crypto/rand.Read rarely fails
 	return hex.EncodeToString(b)
 }
 
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	rand.Read(b) //nolint:errcheck // crypto/rand.Read rarely fails
 	return hex.EncodeToString(b)
 }

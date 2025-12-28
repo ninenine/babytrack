@@ -74,10 +74,10 @@ func (c *GoogleOAuthClient) ExchangeCode(ctx context.Context, code string) (*Goo
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Best-effort close
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best-effort read for error message
 		return nil, fmt.Errorf("token exchange failed: %s", string(body))
 	}
 
@@ -90,7 +90,7 @@ func (c *GoogleOAuthClient) ExchangeCode(ctx context.Context, code string) (*Goo
 }
 
 func (c *GoogleOAuthClient) GetUserInfo(ctx context.Context, accessToken string) (*GoogleUserInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v2/userinfo", http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -100,10 +100,10 @@ func (c *GoogleOAuthClient) GetUserInfo(ctx context.Context, accessToken string)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Best-effort close
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best-effort read for error message
 		return nil, fmt.Errorf("get user info failed: %s", string(body))
 	}
 

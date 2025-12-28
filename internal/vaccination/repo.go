@@ -94,7 +94,6 @@ func (r *repository) List(ctx context.Context, filter *VaccinationFilter) ([]Vac
 	if filter.UpcomingOnly {
 		query += fmt.Sprintf(` AND completed = false AND scheduled_at >= $%d`, argIndex)
 		args = append(args, time.Now().Truncate(24*time.Hour))
-		argIndex++
 	}
 
 	query += ` ORDER BY scheduled_at ASC`
@@ -103,7 +102,7 @@ func (r *repository) List(ctx context.Context, filter *VaccinationFilter) ([]Vac
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var vaccinations []Vaccination
 	for rows.Next() {
@@ -229,7 +228,7 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var vaccinations []Vaccination
 	for rows.Next() {
@@ -271,7 +270,7 @@ func (r *repository) GetUpcoming(ctx context.Context, childID string, days int) 
 }
 
 func (r *repository) GetSchedule() []VaccinationSchedule {
-	// Kenya Expanded Programme on Immunization (EPI) schedule
+	// Kenya Expanded Program on Immunization (EPI) schedule
 	return []VaccinationSchedule{
 		// Birth
 		{ID: "bcg-1", Name: "BCG", Description: "Bacillus Calmette-Guérin (Tuberculosis)", AgeWeeks: 0, AgeMonths: 0, AgeLabel: "Birth", Dose: 1},

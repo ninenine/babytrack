@@ -83,7 +83,6 @@ func (r *repository) List(ctx context.Context, filter *MedicationFilter) ([]Medi
 	if filter.ActiveOnly {
 		query += fmt.Sprintf(` AND active = $%d`, argIndex)
 		args = append(args, true)
-		argIndex++
 	}
 
 	query += ` ORDER BY name ASC`
@@ -92,7 +91,7 @@ func (r *repository) List(ctx context.Context, filter *MedicationFilter) ([]Medi
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var medications []Medication
 	for rows.Next() {
@@ -218,7 +217,7 @@ func (r *repository) ListLogs(ctx context.Context, medicationID string) ([]Medic
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var logs []MedicationLog
 	for rows.Next() {

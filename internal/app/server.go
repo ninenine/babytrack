@@ -191,7 +191,7 @@ func (s *Server) serveUI() {
 
 		// Check if file exists
 		if f, err := subFS.Open(filePath); err == nil {
-			f.Close()
+			_ = f.Close() //nolint:errcheck // Best-effort close, just checking file existence
 			// Set correct content type based on extension
 			ext := path.Ext(filePath)
 			switch ext {

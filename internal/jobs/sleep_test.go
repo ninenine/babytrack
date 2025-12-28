@@ -317,3 +317,70 @@ func TestSleepRecommendations(t *testing.T) {
 		})
 	}
 }
+
+func TestSleepAnalyticsJob_Run_ListError(t *testing.T) {
+	sleepSvc := newMockSleepService()
+	sleepSvc.listErr = &testError{msg: "list error"}
+	job := NewSleepAnalyticsJob(sleepSvc)
+
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() should not return error even if list fails: %v", err)
+	}
+}
+
+func TestSleepAnalyticsJob_Run_LongNapNoHub(t *testing.T) {
+	now := time.Now()
+	sleepSvc := newMockSleepService()
+	sleepSvc.sleeps = []sleep.Sleep{
+		{
+			ID:        "sleep-1",
+			ChildID:   "child-1",
+			Type:      sleep.SleepTypeNap,
+			StartTime: now.Add(-4 * time.Hour),
+			EndTime:   nil,
+		},
+	}
+
+	job := NewSleepAnalyticsJob(sleepSvc)
+	// No hub set
+
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+}
+
+func TestSleepAnalyticsJob_Run_LongNapHubNoClients(t *testing.T) {
+	now := time.Now()
+	sleepSvc := newMockSleepService()
+	sleepSvc.sleeps = []sleep.Sleep{
+		{
+			ID:        "sleep-1",
+			ChildID:   "child-1",
+			Type:      sleep.SleepTypeNap,
+			StartTime: now.Add(-4 * time.Hour),
+			EndTime:   nil,
+		},
+	}
+
+	hub := notifications.NewHub()
+	go hub.Run()
+	time.Sleep(10 * time.Millisecond)
+
+	job := NewSleepAnalyticsJob(sleepSvc).WithNotificationHub(hub)
+	// Hub has no clients
+
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+}
+
+type testError struct {
+	msg string
+}
+
+func (e *testError) Error() string {
+	return e.msg
+}

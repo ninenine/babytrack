@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/ninenine/babytrack/internal/auth"
@@ -43,7 +44,7 @@ func (s *Server) authMiddleware() gin.HandlerFunc {
 
 		user, err := s.authService.ValidateToken(c.Request.Context(), token)
 		if err != nil {
-			if err == auth.ErrExpiredToken {
+			if errors.Is(err, auth.ErrExpiredToken) {
 				c.AbortWithStatusJSON(401, gin.H{"error": "token expired"})
 				return
 			}
@@ -65,7 +66,7 @@ func extractToken(c *gin.Context) string {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
 		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+		if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
 			return parts[1]
 		}
 	}

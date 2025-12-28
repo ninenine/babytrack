@@ -46,7 +46,7 @@ func (s *service) Create(ctx context.Context, req *CreateAppointmentRequest) (*A
 		Duration:    duration,
 		Notes:       req.Notes,
 		Completed:   false,
-		Cancelled:   false,
+		Canceled:    false,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
@@ -123,7 +123,7 @@ func (s *service) Cancel(ctx context.Context, id string) error {
 		return fmt.Errorf("appointment not found")
 	}
 
-	apt.Cancelled = true
+	apt.Canceled = true
 	apt.UpdatedAt = time.Now()
 
 	if err := s.repo.Update(ctx, apt); err != nil {
@@ -139,6 +139,6 @@ func (s *service) GetUpcoming(ctx context.Context, childID string, days int) ([]
 
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	rand.Read(b) //nolint:errcheck // crypto/rand.Read rarely fails
 	return hex.EncodeToString(b)
 }

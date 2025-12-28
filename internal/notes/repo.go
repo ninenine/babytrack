@@ -93,7 +93,6 @@ func (r *repository) List(ctx context.Context, filter *NoteFilter) ([]Note, erro
 	if len(filter.Tags) > 0 {
 		query += fmt.Sprintf(` AND tags && $%d`, argIndex)
 		args = append(args, pq.Array(filter.Tags))
-		argIndex++
 	}
 
 	query += ` ORDER BY pinned DESC, created_at DESC`
@@ -102,7 +101,7 @@ func (r *repository) List(ctx context.Context, filter *NoteFilter) ([]Note, erro
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var notes []Note
 	for rows.Next() {
@@ -199,7 +198,7 @@ func (r *repository) Search(ctx context.Context, childID, query string) ([]Note,
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var notes []Note
 	for rows.Next() {

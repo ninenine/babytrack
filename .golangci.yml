@@ -1,0 +1,317 @@
+version: "2"
+
+# golangci-lint v2 configuration for Gin web projects
+# Optimized for API development, security, and maintainability
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-issued-lines: true
+      print-linter-name: true
+      colors: true
+  sort-order:
+    - linter
+    - file
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/ninenine/babytrack
+
+linters:
+  default: none
+  enable:
+    # Default/Essential
+    - errcheck          # Check for unchecked errors - critical for web apps
+    - govet             # Go vet checks
+    - ineffassign       # Detect ineffectual assignments
+    - staticcheck       # Comprehensive static analysis (includes gosimple)
+    - unused            # Find unused code
+
+    # Security - Important for web APIs
+    - gosec             # Security vulnerabilities
+    - bodyclose         # HTTP response body must be closed
+    - noctx             # HTTP requests should use context
+    - sqlclosecheck     # SQL rows/statements should be closed
+
+    # Error Handling - Critical for APIs
+    - nilerr            # Return nil error with non-nil value
+    - errname           # Error naming conventions
+    - errorlint         # Error wrapping/comparison issues
+
+    # Code Quality
+    - gocritic          # Comprehensive code review
+    - gocyclo           # Cyclomatic complexity
+    - gocognit          # Cognitive complexity
+    - dupl              # Duplicate code detection
+    - funlen            # Function length limits
+    - nestif            # Deeply nested if statements
+    - revive            # Fast, configurable linter
+
+    # Style & Consistency
+    - misspell          # Spelling mistakes
+    - whitespace        # Unnecessary whitespace
+    - unconvert         # Unnecessary type conversions
+
+    # Performance
+    - prealloc          # Slice preallocation hints
+
+    # Bugs & Correctness
+    - copyloopvar       # Loop variable capture (Go 1.22+)
+    - durationcheck     # Duration multiplication issues
+    - exhaustive        # Exhaustive enum switches
+    - makezero          # Slice append after make
+    - nosprintfhostport # Host:port formatting issues
+    - predeclared       # Shadowing predeclared identifiers
+
+    # Modernization
+    - intrange          # Range over int (Go 1.22+)
+    - modernize         # Modern Go idioms
+
+    # Context
+    - contextcheck      # Context propagation
+    - fatcontext        # Context in struct fields
+
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+    rules:
+      # Test files can be more relaxed
+      - path: _test\.go
+        linters:
+          - dupl
+          - funlen
+          - gocyclo
+          - gocognit
+          - errcheck
+          - gocritic
+          - gosec
+          - noctx
+          - nestif
+          - prealloc
+
+      # Main/cmd files
+      - path: main\.go
+        linters:
+          - funlen
+
+      - path: cmd/
+        linters:
+          - funlen
+
+      # Handler files
+      - path: handler\.go
+        linters:
+          - funlen
+
+      # Repository and service files - duplicate code is expected
+      - path: ".*repo\\.go"
+        linters:
+          - dupl
+
+      - path: ".*service\\.go"
+        linters:
+          - dupl
+
+      # Test utilities
+      - path: "testutil"
+        linters:
+          - errcheck
+
+      # Generated code
+      - path: .*\.gen\.go
+        linters:
+          - errcheck
+          - dupl
+          - funlen
+
+      - path: .*_gen\.go
+        linters:
+          - errcheck
+          - dupl
+          - funlen
+
+    paths:
+      - vendor
+      - third_party
+      - testdata
+      - web
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    gosec:
+      severity: medium
+      confidence: medium
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+
+    staticcheck:
+      checks:
+        - all
+        - -ST1000  # Package comments - package names are self-explanatory
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - whyNoLint
+        - hugeParam
+        - unnamedResult
+        - paramTypeCombine
+        - ifElseChain
+      settings:
+        captLocal:
+          paramsOnly: true
+        rangeValCopy:
+          sizeThreshold: 256
+
+    revive:
+      rules:
+        # Error handling
+        - name: error-return
+          severity: warning
+        - name: error-strings
+          severity: warning
+        - name: error-naming
+          severity: warning
+        - name: errorf
+          severity: warning
+
+        # Code style
+        - name: blank-imports
+          severity: warning
+        - name: context-as-argument
+          severity: error
+        - name: context-keys-type
+          severity: warning
+        - name: dot-imports
+          severity: warning
+        - name: empty-block
+          severity: warning
+        - name: increment-decrement
+          severity: warning
+        - name: indent-error-flow
+          severity: warning
+        - name: range
+          severity: warning
+        - name: receiver-naming
+          severity: warning
+        - name: time-naming
+          severity: warning
+        - name: var-declaration
+          severity: warning
+        - name: var-naming
+          severity: warning
+        - name: unexported-return
+          severity: warning
+
+        # Safety
+        - name: atomic
+          severity: error
+        - name: call-to-gc
+          severity: warning
+        - name: defer
+          severity: warning
+          arguments:
+            - - call-chain
+              - loop
+        - name: identical-branches
+          severity: warning
+        - name: modifies-parameter
+          severity: warning
+        - name: modifies-value-receiver
+          severity: warning
+        - name: range-val-address
+          severity: error
+        - name: range-val-in-closure
+          severity: error
+        - name: unconditional-recursion
+          severity: error
+        - name: waitgroup-by-value
+          severity: error
+
+        # Disabled - not practical for application code
+        - name: add-constant
+          disabled: true  # Not every 0, 1, "" needs a named constant
+        - name: line-length-limit
+          disabled: true  # Modern editors handle long lines; breaking often hurts readability
+        - name: max-public-structs
+          disabled: true  # Arbitrary limit; some packages legitimately need many types
+        - name: package-comments
+          disabled: true  # Package names are self-explanatory
+        - name: exported
+          disabled: true  # In internal packages, self-documenting names are sufficient
+
+    gocyclo:
+      min-complexity: 15
+
+    gocognit:
+      min-complexity: 25
+
+    funlen:
+      lines: 100
+      statements: 60
+      ignore-comments: true
+
+    nestif:
+      min-complexity: 4
+
+    dupl:
+      threshold: 250
+
+    misspell:
+      locale: US
+
+    errorlint:
+      errorf: true
+      errorf-multi: true
+      asserts: true
+      comparison: true
+
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-signifies-exhaustive: true
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 5
+
+severity:
+  default: warning
+  rules:
+    - linters:
+        - gosec
+        - govet
+        - staticcheck
+      severity: error
