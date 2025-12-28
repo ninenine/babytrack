@@ -1,5 +1,10 @@
 # BabyTrack
 
+[![CI](https://github.com/ninenine/babytrack/actions/workflows/ci.yml/badge.svg)](https://github.com/ninenine/babytrack/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ninenine/babytrack)](https://github.com/ninenine/babytrack/releases/latest)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ninenine/babytrack)](https://go.dev/)
+[![License](https://img.shields.io/github/license/ninenine/babytrack)](LICENSE)
+
 A mobile-first web application for tracking baby care activities including feeding, sleep, medications, vaccinations, appointments, and notes. Built with offline-first architecture for reliable use even without internet connectivity.
 
 ## Features
