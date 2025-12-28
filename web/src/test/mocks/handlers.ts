@@ -82,7 +82,7 @@ export const handlers = [
   }),
 
   http.post(API_ENDPOINTS.FEEDINGS.BASE, async ({ request }) => {
-    const body = await request.json()
+    const body = (await request.json()) as Record<string, unknown>
     return HttpResponse.json(
       { id: 'feeding-new', ...body },
       { status: 201 }
@@ -97,7 +97,7 @@ export const handlers = [
   }),
 
   http.put(API_ENDPOINTS.FEEDINGS.BY_ID(':id'), async ({ params, request }) => {
-    const body = await request.json()
+    const body = (await request.json()) as Record<string, unknown>
     return HttpResponse.json({ id: params.id, ...body })
   }),
 
@@ -116,7 +116,7 @@ export const handlers = [
   }),
 
   http.post(API_ENDPOINTS.SLEEP.START, async ({ request }) => {
-    const body = await request.json()
+    const body = (await request.json()) as Record<string, unknown>
     return HttpResponse.json(
       { id: 'sleep-new', ...body },
       { status: 201 }
@@ -124,8 +124,8 @@ export const handlers = [
   }),
 
   http.post(API_ENDPOINTS.SLEEP.END(':id'), async ({ params, request }) => {
-    const body = await request.json()
-    return HttpResponse.json({ id: params.id, ...mockSleep, ...body })
+    const body = (await request.json()) as Record<string, unknown>
+    return HttpResponse.json({ ...mockSleep, ...body, id: params.id })
   }),
 
   // Sync
