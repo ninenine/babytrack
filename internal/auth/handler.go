@@ -27,7 +27,9 @@ func (h *Handler) googleAuth(c *gin.Context) {
 	url, state := h.service.GetGoogleAuthURL()
 
 	// Set state in cookie for validation
-	c.SetCookie("oauth_state", state, 600, "/", "", false, true)
+	// Secure=true for HTTPS (production), detected via X-Forwarded-Proto or TLS
+	secure := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+	c.SetCookie("oauth_state", state, 600, "/", "", secure, true)
 
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
