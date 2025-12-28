@@ -41,7 +41,7 @@ func (h *Handler) Stream(c *gin.Context) {
 
 	// Create client
 	client := &Client{
-		UserID: userID.(string),
+		UserID: userID.(string), //nolint:errcheck // Type assertion validated by auth middleware
 		Send:   make(chan []byte, 256),
 	}
 
@@ -51,10 +51,10 @@ func (h *Handler) Stream(c *gin.Context) {
 
 	log.Printf("[SSE] Client connected: %s", client.UserID)
 
-	// Send initial connection event
-	c.Writer.WriteString(fmt.Sprintf("id: %s\n", uuid.New().String()))
-	c.Writer.WriteString("event: connected\n")
-	c.Writer.WriteString("data: {\"status\":\"connected\"}\n\n")
+	// Send initial connection event (SSE writes - connection failures handled by context cancellation)
+	_, _ = fmt.Fprintf(c.Writer, "id: %s\n", uuid.New().String())       //nolint:errcheck
+	_, _ = c.Writer.WriteString("event: connected\n")                   //nolint:errcheck
+	_, _ = c.Writer.WriteString("data: {\"status\":\"connected\"}\n\n") //nolint:errcheck
 	c.Writer.Flush()
 
 	// Create channel for client disconnect
@@ -69,9 +69,10 @@ func (h *Handler) Stream(c *gin.Context) {
 			if !ok {
 				return
 			}
-			c.Writer.WriteString(fmt.Sprintf("id: %s\n", uuid.New().String()))
-			c.Writer.WriteString("event: notification\n")
-			c.Writer.WriteString(fmt.Sprintf("data: %s\n\n", data))
+			// SSE writes - connection failures handled by context cancellation
+			_, _ = fmt.Fprintf(c.Writer, "id: %s\n", uuid.New().String()) //nolint:errcheck
+			_, _ = c.Writer.WriteString("event: notification\n")          //nolint:errcheck
+			_, _ = fmt.Fprintf(c.Writer, "data: %s\n\n", data)            //nolint:errcheck
 			c.Writer.Flush()
 		}
 	}

@@ -46,7 +46,7 @@ func (j *AppointmentReminderJob) Run(ctx context.Context) error {
 	notifiedCount := 0
 
 	for _, apt := range upcoming {
-		if apt.Completed || apt.Cancelled {
+		if apt.Completed || apt.Canceled {
 			continue
 		}
 

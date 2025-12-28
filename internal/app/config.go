@@ -33,7 +33,7 @@ type NotificationsConfig struct {
 }
 
 func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // Config path is controlled by server operator
 	if err != nil {
 		return nil, err
 	}

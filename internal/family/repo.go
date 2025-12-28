@@ -93,7 +93,7 @@ func (r *repository) GetFamilyMembers(ctx context.Context, familyID string) ([]F
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var members []FamilyMember
 	for rows.Next() {
@@ -120,7 +120,7 @@ func (r *repository) GetFamilyMembersWithUsers(ctx context.Context, familyID str
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var members []MemberWithUser
 	for rows.Next() {
@@ -186,7 +186,7 @@ func (r *repository) GetUserFamilies(ctx context.Context, userID string) ([]Fami
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var families []Family
 	for rows.Next() {
@@ -214,7 +214,7 @@ func (r *repository) GetChildren(ctx context.Context, familyID string) ([]Child,
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var children []Child
 	for rows.Next() {

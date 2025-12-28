@@ -95,7 +95,6 @@ func (r *repository) List(ctx context.Context, filter *SleepFilter) ([]Sleep, er
 	if filter.Type != nil {
 		query += fmt.Sprintf(` AND type = $%d`, argIndex)
 		args = append(args, *filter.Type)
-		argIndex++
 	}
 
 	query += ` ORDER BY start_time DESC LIMIT 100`
@@ -104,7 +103,7 @@ func (r *repository) List(ctx context.Context, filter *SleepFilter) ([]Sleep, er
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var sleeps []Sleep
 	for rows.Next() {

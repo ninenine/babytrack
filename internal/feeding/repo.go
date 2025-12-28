@@ -100,7 +100,6 @@ func (r *repository) List(ctx context.Context, filter *FeedingFilter) ([]Feeding
 	if filter.Type != nil {
 		query += fmt.Sprintf(` AND type = $%d`, argIndex)
 		args = append(args, *filter.Type)
-		argIndex++
 	}
 
 	query += ` ORDER BY start_time DESC LIMIT 100`
@@ -109,7 +108,7 @@ func (r *repository) List(ctx context.Context, filter *FeedingFilter) ([]Feeding
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // Best-effort close
 
 	var feedings []Feeding
 	for rows.Next() {

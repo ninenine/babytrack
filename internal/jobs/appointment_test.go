@@ -110,7 +110,7 @@ func TestAppointmentReminderJob_Run_StartingSoon(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute), // 30 minutes from now
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -152,7 +152,7 @@ func TestAppointmentReminderJob_Run_Today(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(5 * time.Hour), // 5 hours from now (today)
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -195,7 +195,7 @@ func TestAppointmentReminderJob_Run_Tomorrow(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: tomorrow,
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -237,7 +237,7 @@ func TestAppointmentReminderJob_Run_TooFarAway(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Hour), // More than 24 hours away
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -277,7 +277,7 @@ func TestAppointmentReminderJob_Run_SkipsCompleted(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   true,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -313,11 +313,11 @@ func TestAppointmentReminderJob_Run_SkipsCancelled(t *testing.T) {
 	aptSvc.upcoming = []appointment.Appointment{
 		{
 			ID:          "apt-1",
-			Title:       "Cancelled Appointment",
+			Title:       "Canceled Appointment",
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   false,
-			Cancelled:   true,
+			Canceled:    true,
 		},
 	}
 
@@ -341,7 +341,7 @@ func TestAppointmentReminderJob_Run_SkipsCancelled(t *testing.T) {
 
 	select {
 	case <-client.Send:
-		t.Error("Should not receive notification for cancelled appointment")
+		t.Error("Should not receive notification for canceled appointment")
 	case <-time.After(50 * time.Millisecond):
 		// Expected - no notification
 	}
@@ -357,7 +357,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 		{
 			ID:          "apt-2",
@@ -365,7 +365,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(2 * time.Hour),
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 		{
 			ID:          "apt-3",
@@ -373,7 +373,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(1 * time.Hour),
 			Completed:   true,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 
@@ -397,12 +397,13 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 
 	// Should receive 2 notifications (not the completed one)
 	count := 0
+loop:
 	for range 2 {
 		select {
 		case <-client.Send:
 			count++
 		case <-time.After(100 * time.Millisecond):
-			break
+			break loop
 		}
 	}
 
@@ -421,7 +422,7 @@ func TestAppointmentReminderJob_Run_PastAppointment(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(-1 * time.Hour), // In the past
 			Completed:   false,
-			Cancelled:   false,
+			Canceled:    false,
 		},
 	}
 

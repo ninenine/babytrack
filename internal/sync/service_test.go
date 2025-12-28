@@ -914,3 +914,414 @@ func TestService_Push_EmptyEvents(t *testing.T) {
 		t.Errorf("Push() Failed = %d, want 0", resp.Failed)
 	}
 }
+
+func TestService_Push_SleepUpdate(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	sleepSvc.sleeps["sleep-123"] = &sleep.Sleep{ID: "sleep-123"}
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeSleep,
+				Action:    "update",
+				EntityID:  "sleep-123",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"child_id":   "child-123",
+					"type":       "night",
+					"start_time": time.Now().Format(time.RFC3339),
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Processed != 1 {
+		t.Errorf("Push() Processed = %d, want 1", resp.Processed)
+	}
+}
+
+func TestService_Push_SleepDelete(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	sleepSvc.sleeps["sleep-123"] = &sleep.Sleep{ID: "sleep-123"}
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeSleep,
+				Action:    "delete",
+				EntityID:  "sleep-123",
+				Timestamp: time.Now(),
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Processed != 1 {
+		t.Errorf("Push() Processed = %d, want 1", resp.Processed)
+	}
+
+	if sleepSvc.sleeps["sleep-123"] != nil {
+		t.Error("Push() should have deleted the sleep record")
+	}
+}
+
+func TestService_Push_SleepUnknownAction(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeSleep,
+				Action:    "unknown_action",
+				Timestamp: time.Now(),
+				Data:      map[string]any{},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1 for unknown action", resp.Failed)
+	}
+}
+
+func TestService_Push_MedicationUpdate(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	medSvc.medications["med-123"] = &medication.Medication{ID: "med-123", Name: "Original"}
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedication,
+				Action:    "update",
+				EntityID:  "med-123",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"name":   "Updated Med",
+					"dosage": "10",
+					"unit":   "mg",
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Processed != 1 {
+		t.Errorf("Push() Processed = %d, want 1", resp.Processed)
+	}
+}
+
+func TestService_Push_MedicationDelete(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	medSvc.medications["med-123"] = &medication.Medication{ID: "med-123"}
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedication,
+				Action:    "delete",
+				EntityID:  "med-123",
+				Timestamp: time.Now(),
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Processed != 1 {
+		t.Errorf("Push() Processed = %d, want 1", resp.Processed)
+	}
+
+	if medSvc.medications["med-123"] != nil {
+		t.Error("Push() should have deleted the medication")
+	}
+}
+
+func TestService_Push_MedicationUnknownAction(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedication,
+				Action:    "unknown_action",
+				Timestamp: time.Now(),
+				Data:      map[string]any{},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1 for unknown action", resp.Failed)
+	}
+}
+
+func TestService_Push_MedicationLogUnknownAction(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedicationLog,
+				Action:    "unknown_action",
+				Timestamp: time.Now(),
+				Data:      map[string]any{},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1 for unknown action", resp.Failed)
+	}
+}
+
+func TestService_Push_NoteUnknownAction(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeNote,
+				Action:    "unknown_action",
+				Timestamp: time.Now(),
+				Data:      map[string]any{},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1 for unknown action", resp.Failed)
+	}
+}
+
+func TestService_Push_SleepServiceError(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	sleepSvc.createErr = errors.New("sleep service error")
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeSleep,
+				Action:    "create",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"child_id":   "child-123",
+					"type":       "nap",
+					"start_time": time.Now().Format(time.RFC3339),
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1", resp.Failed)
+	}
+}
+
+func TestService_Push_MedicationServiceError(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	medSvc.createErr = errors.New("medication service error")
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedication,
+				Action:    "create",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"child_id": "child-123",
+					"name":     "Test Med",
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1", resp.Failed)
+	}
+}
+
+func TestService_Push_MedicationLogServiceError(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	medSvc.logErr = errors.New("log service error")
+	notesSvc := newMockNotesService()
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeMedicationLog,
+				Action:    "create",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"medication_id": "med-123",
+					"given_at":      time.Now().Format(time.RFC3339),
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1", resp.Failed)
+	}
+}
+
+func TestService_Push_NoteServiceError(t *testing.T) {
+	feedingSvc := newMockFeedingService()
+	sleepSvc := newMockSleepService()
+	medSvc := newMockMedicationService()
+	notesSvc := newMockNotesService()
+	notesSvc.createErr = errors.New("note service error")
+
+	svc := NewService(feedingSvc, sleepSvc, medSvc, notesSvc)
+
+	req := &PushRequest{
+		ClientID: "client-123",
+		Events: []Event{
+			{
+				ID:        "event-1",
+				Type:      EventTypeNote,
+				Action:    "create",
+				Timestamp: time.Now(),
+				Data: map[string]any{
+					"child_id": "child-123",
+					"content":  "Test note",
+				},
+			},
+		},
+	}
+
+	resp, err := svc.Push(context.Background(), "user-123", req)
+	if err != nil {
+		t.Fatalf("Push() error = %v", err)
+	}
+
+	if resp.Failed != 1 {
+		t.Errorf("Push() Failed = %d, want 1", resp.Failed)
+	}
+}

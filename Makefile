@@ -1,4 +1,4 @@
-.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint format pre-commit test test-web test-all
+.PHONY: help install dev dev-web db-up db-down db-reset migrate build build-web build-server run clean lint lint-fix format modernize pre-commit test test-web test-all coverage
 
 # Default target
 help:
@@ -22,13 +22,16 @@ help:
 	@echo ""
 	@echo "  Code Quality:"
 	@echo "    make lint       - Run linters"
+	@echo "    make lint-fix   - Run linters with auto-fix"
 	@echo "    make format     - Format all code"
+	@echo "    make modernize  - Apply Go 1.25 modernization fixes"
 	@echo "    make pre-commit - Run pre-commit hooks on all files"
 	@echo ""
 	@echo "  Testing:"
 	@echo "    make test       - Run Go tests"
 	@echo "    make test-web   - Run web tests"
 	@echo "    make test-all   - Run all tests"
+	@echo "    make coverage   - Generate Go test coverage report"
 	@echo ""
 	@echo "  Other:"
 	@echo "    make run        - Run the built binary"
@@ -91,13 +94,20 @@ clean:
 	rm -f babytrack server
 	rm -rf internal/app/web_dist
 	rm -rf web/node_modules/.vite
+	rm -f coverage.out coverage.html
 
 # Linting
 lint:
 	@echo "Linting Go..."
-	go vet ./...
+	golangci-lint run
 	@echo "Linting web..."
 	cd web && pnpm lint
+
+lint-fix:
+	@echo "Linting and fixing Go..."
+	golangci-lint run --fix
+	@echo "Linting and fixing web..."
+	cd web && pnpm lint --fix
 
 # Formatting
 format:
@@ -105,6 +115,11 @@ format:
 	gofmt -w .
 	@echo "Formatting web..."
 	cd web && pnpm prettier --write "src/**/*.{ts,tsx,css}"
+
+# Modernize Go code
+modernize:
+	@echo "Applying Go 1.25 modernization fixes..."
+	go run golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@latest -fix ./...
 
 # Pre-commit hooks
 pre-commit:
@@ -120,3 +135,10 @@ test-web:
 	cd web && pnpm test
 
 test-all: test test-web
+
+# Coverage report
+coverage:
+	@echo "Generating coverage report..."
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"

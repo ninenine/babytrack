@@ -26,12 +26,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if closeErr := database.Close(); closeErr != nil {
+			log.Printf("error closing database: %v", closeErr)
+		}
+	}()
 
 	// Run migrations
 	log.Println("running database migrations...")
-	if err := database.Migrate(); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+	if migrateErr := database.Migrate(); migrateErr != nil {
+		log.Fatalf("failed to run migrations: %v", migrateErr) //nolint:gocritic // Acceptable in CLI - OS closes db on exit
 	}
 	log.Println("migrations completed")
 

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -57,7 +58,7 @@ func TestJWTManager_Validate_InvalidToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := manager.Validate(tt.token)
-			if err != ErrInvalidToken {
+			if !errors.Is(err, ErrInvalidToken) {
 				t.Errorf("Validate() error = %v, want %v", err, ErrInvalidToken)
 			}
 		})
@@ -76,7 +77,7 @@ func TestJWTManager_Validate_WrongSecret(t *testing.T) {
 
 	// Validate with different secret
 	_, err = manager2.Validate(token)
-	if err != ErrInvalidToken {
+	if !errors.Is(err, ErrInvalidToken) {
 		t.Errorf("Validate() error = %v, want %v", err, ErrInvalidToken)
 	}
 }
@@ -93,7 +94,7 @@ func TestJWTManager_Validate_ExpiredToken(t *testing.T) {
 
 	// Validate should return expired error
 	_, err = manager.Validate(token)
-	if err != ErrExpiredToken {
+	if !errors.Is(err, ErrExpiredToken) {
 		t.Errorf("Validate() error = %v, want %v", err, ErrExpiredToken)
 	}
 }
@@ -132,7 +133,7 @@ func TestJWTManager_RefreshToken_InvalidToken(t *testing.T) {
 	manager := NewJWTManager("test-secret-key", time.Hour)
 
 	_, err := manager.RefreshToken("invalid-token")
-	if err != ErrInvalidToken {
+	if !errors.Is(err, ErrInvalidToken) {
 		t.Errorf("RefreshToken() error = %v, want %v", err, ErrInvalidToken)
 	}
 }

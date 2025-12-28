@@ -236,3 +236,97 @@ func TestMedicationReminderJob_Run_WithNotificationHub(t *testing.T) {
 		t.Error("Expected to receive notification")
 	}
 }
+
+func TestMedicationReminderJob_Run_ListError(t *testing.T) {
+	medSvc := newMockMedicationService()
+	medSvc.listErr = &medTestError{msg: "list error"}
+
+	job := NewMedicationReminderJob(medSvc, nil)
+
+	err := job.Run(context.Background())
+	if err == nil {
+		t.Error("Run() should return error when List fails")
+	}
+}
+
+func TestMedicationReminderJob_Run_GetLastLogError(t *testing.T) {
+	medSvc := newMockMedicationService()
+	medSvc.medications = []medication.Medication{
+		{ID: "med-1", Name: "Medicine A", ChildID: "child-1", Frequency: "once_daily", Active: true},
+	}
+	medSvc.logErr = &medTestError{msg: "log error"}
+
+	job := NewMedicationReminderJob(medSvc, nil)
+
+	// Should not return error, just log and continue
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v, should handle log error gracefully", err)
+	}
+}
+
+func TestMedicationReminderJob_Run_HubWithNoClients(t *testing.T) {
+	medSvc := newMockMedicationService()
+	medSvc.medications = []medication.Medication{
+		{ID: "med-1", Name: "Due Medicine", ChildID: "child-1", Frequency: "once_daily", Active: true},
+	}
+
+	hub := notifications.NewHub()
+	go hub.Run()
+	time.Sleep(10 * time.Millisecond)
+
+	job := NewMedicationReminderJob(medSvc, hub)
+
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+}
+
+func TestMedicationReminderJob_Run_MedicationNotDue(t *testing.T) {
+	now := time.Now()
+	medSvc := newMockMedicationService()
+	medSvc.medications = []medication.Medication{
+		{ID: "med-1", Name: "Medicine A", ChildID: "child-1", Frequency: "once_daily", Active: true},
+	}
+	// Set last log to 2 hours ago - not yet due
+	medSvc.logs["med-1"] = &medication.MedicationLog{
+		ID:           "log-1",
+		MedicationID: "med-1",
+		GivenAt:      now.Add(-2 * time.Hour),
+	}
+
+	hub := notifications.NewHub()
+	go hub.Run()
+	time.Sleep(10 * time.Millisecond)
+
+	client := &notifications.Client{
+		UserID: "user-1",
+		Send:   make(chan []byte, 256),
+	}
+	hub.Register(client)
+	time.Sleep(10 * time.Millisecond)
+
+	job := NewMedicationReminderJob(medSvc, hub)
+
+	err := job.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	// Should not receive notification for medication not yet due
+	select {
+	case <-client.Send:
+		t.Error("Should not receive notification for medication not yet due")
+	case <-time.After(50 * time.Millisecond):
+		// Expected - no notification
+	}
+}
+
+type medTestError struct {
+	msg string
+}
+
+func (e *medTestError) Error() string {
+	return e.msg
+}

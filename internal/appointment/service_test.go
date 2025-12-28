@@ -70,7 +70,7 @@ func (m *mockRepository) GetUpcoming(ctx context.Context, childID string, days i
 	endDate := now.AddDate(0, 0, days)
 
 	for _, apt := range m.appointments {
-		if apt.ChildID == childID && !apt.Completed && !apt.Cancelled {
+		if apt.ChildID == childID && !apt.Completed && !apt.Canceled {
 			if apt.ScheduledAt.After(now) && apt.ScheduledAt.Before(endDate) {
 				result = append(result, *apt)
 			}
@@ -254,10 +254,10 @@ func TestService_Cancel(t *testing.T) {
 		t.Fatalf("Cancel() error = %v", err)
 	}
 
-	// Verify it's marked as cancelled
+	// Verify it's marked as canceled
 	apt, _ := svc.Get(context.Background(), created.ID)
-	if !apt.Cancelled {
-		t.Error("Cancel() should set Cancelled = true")
+	if !apt.Canceled {
+		t.Error("Cancel() should set Canceled = true")
 	}
 }
 
@@ -294,5 +294,163 @@ func TestService_Delete(t *testing.T) {
 	apt, _ := svc.Get(context.Background(), created.ID)
 	if apt != nil {
 		t.Error("Delete() should remove the appointment")
+	}
+}
+
+func TestService_List(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create appointments for different children
+	for i := range 3 {
+		req := &CreateAppointmentRequest{
+			ChildID:     "child-123",
+			Type:        AppointmentTypeWellVisit,
+			Title:       "Checkup",
+			ScheduledAt: time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+		}
+		svc.Create(context.Background(), req)
+	}
+
+	// Create one for a different child
+	otherReq := &CreateAppointmentRequest{
+		ChildID:     "child-456",
+		Type:        AppointmentTypeDental,
+		Title:       "Dental",
+		ScheduledAt: time.Now().Add(48 * time.Hour),
+	}
+	svc.Create(context.Background(), otherReq)
+
+	// List for child-123
+	filter := &AppointmentFilter{ChildID: "child-123"}
+	apts, err := svc.List(context.Background(), filter)
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+
+	if len(apts) != 3 {
+		t.Errorf("List() returned %d appointments, want 3", len(apts))
+	}
+}
+
+func TestService_Update(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create an appointment
+	req := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Original Title",
+		ScheduledAt: time.Now().Add(24 * time.Hour),
+	}
+	created, _ := svc.Create(context.Background(), req)
+
+	// Update it
+	updateReq := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeSpecialist,
+		Title:       "Updated Title",
+		Provider:    "Dr. Updated",
+		ScheduledAt: time.Now().Add(48 * time.Hour),
+		Duration:    60,
+	}
+
+	updated, err := svc.Update(context.Background(), created.ID, updateReq)
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	if updated.Title != "Updated Title" {
+		t.Errorf("Update() Title = %v, want Updated Title", updated.Title)
+	}
+
+	if updated.Type != AppointmentTypeSpecialist {
+		t.Errorf("Update() Type = %v, want specialist", updated.Type)
+	}
+
+	if updated.Duration != 60 {
+		t.Errorf("Update() Duration = %v, want 60", updated.Duration)
+	}
+}
+
+func TestService_Update_NotFound(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	req := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Title",
+		ScheduledAt: time.Now().Add(24 * time.Hour),
+	}
+
+	_, err := svc.Update(context.Background(), "non-existent", req)
+	if err == nil {
+		t.Error("Update() should return error for non-existent appointment")
+	}
+}
+
+func TestService_Update_RepoError(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create an appointment
+	req := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Title",
+		ScheduledAt: time.Now().Add(24 * time.Hour),
+	}
+	created, _ := svc.Create(context.Background(), req)
+
+	// Set error on update
+	repo.updateErr = errors.New("database error")
+
+	_, err := svc.Update(context.Background(), created.ID, req)
+	if err == nil {
+		t.Error("Update() should return error when repo fails")
+	}
+}
+
+func TestService_GetUpcoming(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create upcoming appointment
+	upcomingReq := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Upcoming",
+		ScheduledAt: time.Now().Add(3 * 24 * time.Hour), // 3 days from now
+	}
+	svc.Create(context.Background(), upcomingReq)
+
+	// Create past appointment
+	pastReq := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Past",
+		ScheduledAt: time.Now().Add(-24 * time.Hour), // yesterday
+	}
+	svc.Create(context.Background(), pastReq)
+
+	// Create far future appointment
+	futureReq := &CreateAppointmentRequest{
+		ChildID:     "child-123",
+		Type:        AppointmentTypeWellVisit,
+		Title:       "Far Future",
+		ScheduledAt: time.Now().Add(60 * 24 * time.Hour), // 60 days from now
+	}
+	svc.Create(context.Background(), futureReq)
+
+	// Get upcoming within 7 days
+	apts, err := svc.GetUpcoming(context.Background(), "child-123", 7)
+	if err != nil {
+		t.Fatalf("GetUpcoming() error = %v", err)
+	}
+
+	if len(apts) != 1 {
+		t.Errorf("GetUpcoming() returned %d appointments, want 1", len(apts))
 	}
 }

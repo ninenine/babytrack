@@ -217,6 +217,6 @@ func (s *service) DeleteChild(ctx context.Context, childID string) error {
 
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	rand.Read(b) //nolint:errcheck // crypto/rand.Read rarely fails
 	return hex.EncodeToString(b)
 }
