@@ -117,9 +117,47 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* iOS Safari: prevent auto-zoom on input focus (requires 16px minimum) */
+  input,
+  textarea,
+  select {
+    @apply text-base;
+  }
+  html {
+    /* Use dynamic viewport height for iOS Safari */
+    height: 100%;
+    height: -webkit-fill-available;
+  }
   body {
     @apply bg-background text-foreground;
+    /* iOS Safari: use dvh with fallback */
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+    /* Enable smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
+}
+
+/* Safe area utilities for notched devices */
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-area-pl {
+  padding-left: env(safe-area-inset-left);
+}
+.safe-area-pr {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Fix min-h-screen on iOS Safari */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Prevent Radix Dialog from adding padding-right on mobile */
@@ -127,4 +165,18 @@
   body[style*="padding-right"] {
     padding-right: 0 !important;
   }
+}
+
+/* iOS Safari: prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Remove tap highlight on iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safari: faster touch response on interactive elements */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
 }
