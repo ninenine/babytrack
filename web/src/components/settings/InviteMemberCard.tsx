@@ -209,7 +209,7 @@ export function InviteMemberCard() {
 
       {/* Invite by Email Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Invite Family Member</DialogTitle>
             <DialogDescription>

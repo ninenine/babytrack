@@ -106,7 +106,7 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Child' : 'Add Child'}</DialogTitle>
           <DialogDescription>

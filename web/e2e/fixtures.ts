@@ -22,7 +22,7 @@ export const test = base.extend({
       return route.fulfill({ status: 200, json: [] })
     })
 
-    await use(page)
+    await use(page) // eslint-disable-line react-hooks/rules-of-hooks
   },
 })
 
