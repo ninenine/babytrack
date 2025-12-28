@@ -1,11 +1,27 @@
 import { test as base, expect } from '@playwright/test'
 
 export const test = base.extend({
-  // Auto-clear localStorage before each test
+  // Auto-clear localStorage and mock API routes before each test
   page: async ({ page }, use) => {
     await page.addInitScript(() => {
       window.localStorage.clear()
     })
+
+    // Mock all API routes to prevent ECONNREFUSED errors
+    await page.route('**/api/**', (route) => {
+      const url = route.request().url()
+
+      // Return appropriate empty responses based on endpoint
+      if (url.includes('/auth/')) {
+        return route.fulfill({ status: 200, json: { user: null, token: null } })
+      }
+      if (url.includes('/sync/')) {
+        return route.fulfill({ status: 200, json: { events: [], synced: 0 } })
+      }
+      // Default: return empty array for list endpoints
+      return route.fulfill({ status: 200, json: [] })
+    })
+
     await use(page)
   },
 })
