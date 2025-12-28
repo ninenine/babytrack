@@ -22,6 +22,10 @@ type mockService struct {
 	getUserFamiliesFn  func(ctx context.Context, userID string) ([]FamilyWithChildren, error)
 	createFamilyFn     func(ctx context.Context, userID string, req *CreateFamilyRequest) (*Family, error)
 	getFamilyFn        func(ctx context.Context, familyID string) (*Family, error)
+	updateFamilyFn     func(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error)
+	deleteFamilyFn     func(ctx context.Context, familyID, userID string) error
+	leaveFamilyFn      func(ctx context.Context, familyID, userID string) error
+	getMemberRoleFn    func(ctx context.Context, familyID, userID string) (string, error)
 	getFamilyMembersFn func(ctx context.Context, familyID string) ([]MemberWithUser, error)
 	inviteMemberFn     func(ctx context.Context, familyID string, req *InviteRequest) error
 	joinFamilyFn       func(ctx context.Context, familyID, userID string) (*Family, error)
@@ -52,6 +56,34 @@ func (m *mockService) GetFamily(ctx context.Context, familyID string) (*Family, 
 		return m.getFamilyFn(ctx, familyID)
 	}
 	return nil, nil
+}
+
+func (m *mockService) UpdateFamily(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error) {
+	if m.updateFamilyFn != nil {
+		return m.updateFamilyFn(ctx, familyID, req)
+	}
+	return nil, nil
+}
+
+func (m *mockService) DeleteFamily(ctx context.Context, familyID, userID string) error {
+	if m.deleteFamilyFn != nil {
+		return m.deleteFamilyFn(ctx, familyID, userID)
+	}
+	return nil
+}
+
+func (m *mockService) LeaveFamily(ctx context.Context, familyID, userID string) error {
+	if m.leaveFamilyFn != nil {
+		return m.leaveFamilyFn(ctx, familyID, userID)
+	}
+	return nil
+}
+
+func (m *mockService) GetMemberRole(ctx context.Context, familyID, userID string) (string, error) {
+	if m.getMemberRoleFn != nil {
+		return m.getMemberRoleFn(ctx, familyID, userID)
+	}
+	return "", nil
 }
 
 func (m *mockService) GetFamilyMembers(ctx context.Context, familyID string) ([]MemberWithUser, error) {
@@ -413,6 +445,299 @@ func TestGetFamily_ServiceError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("Expected status 500, got %d", w.Code)
+	}
+}
+
+// ============================================================================
+// Update Family Tests
+// ============================================================================
+
+func TestUpdateFamily_Success(t *testing.T) {
+	now := time.Now()
+	mock := &mockService{
+		updateFamilyFn: func(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error) {
+			if familyID != "family-123" {
+				t.Errorf("Expected familyID family-123, got %s", familyID)
+			}
+			if req.Name != "Updated Family Name" {
+				t.Errorf("Expected name Updated Family Name, got %s", req.Name)
+			}
+			return &Family{
+				ID:        familyID,
+				Name:      req.Name,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}, nil
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	body := `{"name": "Updated Family Name"}`
+	req := httptest.NewRequest("PUT", "/families/family-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var response Family
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if response.Name != "Updated Family Name" {
+		t.Errorf("Expected name Updated Family Name, got %s", response.Name)
+	}
+}
+
+func TestUpdateFamily_ValidationError_MissingName(t *testing.T) {
+	mock := &mockService{}
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	body := `{}`
+	req := httptest.NewRequest("PUT", "/families/family-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400, got %d", w.Code)
+	}
+}
+
+func TestUpdateFamily_ValidationError_InvalidJSON(t *testing.T) {
+	mock := &mockService{}
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	body := `{invalid json}`
+	req := httptest.NewRequest("PUT", "/families/family-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400, got %d", w.Code)
+	}
+}
+
+func TestUpdateFamily_ServiceError(t *testing.T) {
+	mock := &mockService{
+		updateFamilyFn: func(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error) {
+			return nil, errors.New("family not found")
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	body := `{"name": "Updated Family Name"}`
+	req := httptest.NewRequest("PUT", "/families/family-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status 500, got %d", w.Code)
+	}
+}
+
+// ============================================================================
+// Delete Family Tests
+// ============================================================================
+
+func TestDeleteFamily_Success(t *testing.T) {
+	mock := &mockService{
+		deleteFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			if familyID != "family-123" {
+				t.Errorf("Expected familyID family-123, got %s", familyID)
+			}
+			if userID != "test-user" {
+				t.Errorf("Expected userID test-user, got %s", userID)
+			}
+			return nil
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("DELETE", "/families/family-123", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Expected status 204, got %d", w.Code)
+	}
+}
+
+func TestDeleteFamily_Forbidden_NotAdmin(t *testing.T) {
+	mock := &mockService{
+		deleteFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			return errors.New("only admins can delete a family")
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("DELETE", "/families/family-123", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected status 403, got %d", w.Code)
+	}
+
+	var response map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if response["error"] != "only admins can delete a family" {
+		t.Errorf("Expected error message, got %s", response["error"])
+	}
+}
+
+func TestDeleteFamily_ServiceError(t *testing.T) {
+	mock := &mockService{
+		deleteFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			return errors.New("database error")
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("DELETE", "/families/family-123", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status 500, got %d", w.Code)
+	}
+}
+
+func TestDeleteFamily_UsesCorrectUserID(t *testing.T) {
+	var capturedUserID string
+	mock := &mockService{
+		deleteFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			capturedUserID = userID
+			return nil
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouterWithUserID(handler, "admin-user-123")
+
+	req := httptest.NewRequest("DELETE", "/families/family-123", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if capturedUserID != "admin-user-123" {
+		t.Errorf("Expected userID admin-user-123, got %s", capturedUserID)
+	}
+}
+
+// ============================================================================
+// Leave Family Tests
+// ============================================================================
+
+func TestLeaveFamily_Success(t *testing.T) {
+	mock := &mockService{
+		leaveFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			if familyID != "family-123" {
+				t.Errorf("Expected familyID family-123, got %s", familyID)
+			}
+			if userID != "test-user" {
+				t.Errorf("Expected userID test-user, got %s", userID)
+			}
+			return nil
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("POST", "/families/family-123/leave", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Expected status 204, got %d", w.Code)
+	}
+}
+
+func TestLeaveFamily_OnlyAdmin(t *testing.T) {
+	mock := &mockService{
+		leaveFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			return errors.New("cannot leave: you are the only admin")
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("POST", "/families/family-123/leave", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400, got %d", w.Code)
+	}
+
+	var response map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if response["error"] != "cannot leave: you are the only admin" {
+		t.Errorf("Expected error message, got %s", response["error"])
+	}
+}
+
+func TestLeaveFamily_ServiceError(t *testing.T) {
+	mock := &mockService{
+		leaveFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			return errors.New("database error")
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouter(handler)
+
+	req := httptest.NewRequest("POST", "/families/family-123/leave", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status 500, got %d", w.Code)
+	}
+}
+
+func TestLeaveFamily_UsesCorrectUserID(t *testing.T) {
+	var capturedUserID string
+	mock := &mockService{
+		leaveFamilyFn: func(ctx context.Context, familyID, userID string) error {
+			capturedUserID = userID
+			return nil
+		},
+	}
+
+	handler := NewHandler(mock)
+	router := setupRouterWithUserID(handler, "leaving-user-456")
+
+	req := httptest.NewRequest("POST", "/families/family-123/leave", http.NoBody)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if capturedUserID != "leaving-user-456" {
+		t.Errorf("Expected userID leaving-user-456, got %s", capturedUserID)
 	}
 }
 
@@ -1149,6 +1474,9 @@ func TestRegisterRoutes(t *testing.T) {
 		"GET/families":                                "listFamilies",
 		"POST/families":                               "createFamily",
 		"GET/families/:familyId":                      "getFamily",
+		"PUT/families/:familyId":                      "updateFamily",
+		"DELETE/families/:familyId":                   "deleteFamily",
+		"POST/families/:familyId/leave":               "leaveFamily",
 		"GET/families/:familyId/members":              "listMembers",
 		"POST/families/:familyId/invite":              "inviteMember",
 		"POST/families/:familyId/join":                "joinFamily",

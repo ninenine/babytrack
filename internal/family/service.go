@@ -13,6 +13,10 @@ type Service interface {
 	CreateFamily(ctx context.Context, userID string, req *CreateFamilyRequest) (*Family, error)
 	GetFamily(ctx context.Context, familyID string) (*Family, error)
 	GetUserFamilies(ctx context.Context, userID string) ([]FamilyWithChildren, error)
+	UpdateFamily(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error)
+	DeleteFamily(ctx context.Context, familyID, userID string) error
+	LeaveFamily(ctx context.Context, familyID, userID string) error
+	GetMemberRole(ctx context.Context, familyID, userID string) (string, error)
 
 	// Members
 	GetFamilyMembers(ctx context.Context, familyID string) ([]MemberWithUser, error)
@@ -98,6 +102,85 @@ func (s *service) GetUserFamilies(ctx context.Context, userID string) ([]FamilyW
 		}
 	}
 	return result, nil
+}
+
+func (s *service) UpdateFamily(ctx context.Context, familyID string, req *CreateFamilyRequest) (*Family, error) {
+	family, err := s.repo.GetFamilyByID(ctx, familyID)
+	if err != nil {
+		return nil, err
+	}
+	if family == nil {
+		return nil, fmt.Errorf("family not found")
+	}
+
+	family.Name = req.Name
+	family.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateFamily(ctx, family); err != nil {
+		return nil, fmt.Errorf("failed to update family: %w", err)
+	}
+
+	return family, nil
+}
+
+func (s *service) DeleteFamily(ctx context.Context, familyID, userID string) error {
+	// Verify user is admin
+	role, err := s.GetMemberRole(ctx, familyID, userID)
+	if err != nil {
+		return err
+	}
+	if role != "admin" {
+		return fmt.Errorf("only admins can delete a family")
+	}
+
+	return s.repo.DeleteFamily(ctx, familyID)
+}
+
+func (s *service) LeaveFamily(ctx context.Context, familyID, userID string) error {
+	// Verify user is a member
+	isMember, err := s.repo.IsMember(ctx, familyID, userID)
+	if err != nil {
+		return err
+	}
+	if !isMember {
+		return fmt.Errorf("not a member of this family")
+	}
+
+	// Check if user is the only admin
+	role, err := s.GetMemberRole(ctx, familyID, userID)
+	if err != nil {
+		return err
+	}
+	if role == "admin" {
+		members, err := s.repo.GetFamilyMembers(ctx, familyID)
+		if err != nil {
+			return err
+		}
+		adminCount := 0
+		for _, m := range members {
+			if m.Role == "admin" {
+				adminCount++
+			}
+		}
+		if adminCount <= 1 {
+			return fmt.Errorf("cannot leave: you are the only admin")
+		}
+	}
+
+	return s.repo.RemoveFamilyMember(ctx, familyID, userID)
+}
+
+func (s *service) GetMemberRole(ctx context.Context, familyID, userID string) (string, error) {
+	members, err := s.repo.GetFamilyMembers(ctx, familyID)
+	if err != nil {
+		return "", err
+	}
+	for _, m := range members {
+		if m.UserID == userID {
+			return m.Role, nil
+		}
+	}
+	return "", fmt.Errorf("user is not a member of this family")
 }
 
 func (s *service) GetFamilyMembers(ctx context.Context, familyID string) ([]MemberWithUser, error) {

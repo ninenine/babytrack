@@ -11,6 +11,7 @@ type Repository interface {
 	GetFamilyByID(ctx context.Context, id string) (*Family, error)
 	CreateFamily(ctx context.Context, family *Family) error
 	UpdateFamily(ctx context.Context, family *Family) error
+	DeleteFamily(ctx context.Context, id string) error
 
 	// Members
 	GetFamilyMembers(ctx context.Context, familyID string) ([]FamilyMember, error)
@@ -81,6 +82,12 @@ func (r *repository) UpdateFamily(ctx context.Context, family *Family) error {
 		family.UpdatedAt,
 	)
 
+	return err
+}
+
+func (r *repository) DeleteFamily(ctx context.Context, id string) error {
+	query := `DELETE FROM families WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
 

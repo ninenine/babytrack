@@ -18,6 +18,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("", h.listFamilies)
 	rg.POST("", h.createFamily)
 	rg.GET("/:familyId", h.getFamily)
+	rg.PUT("/:familyId", h.updateFamily)
+	rg.DELETE("/:familyId", h.deleteFamily)
+	rg.POST("/:familyId/leave", h.leaveFamily)
 
 	rg.GET("/:familyId/members", h.listMembers)
 	rg.POST("/:familyId/invite", h.inviteMember)
@@ -64,6 +67,52 @@ func (h *Handler) getFamily(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, family)
+}
+
+func (h *Handler) updateFamily(c *gin.Context) {
+	var req CreateFamilyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	familyID := c.Param("familyId")
+	family, err := h.service.UpdateFamily(c.Request.Context(), familyID, &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, family)
+}
+
+func (h *Handler) deleteFamily(c *gin.Context) {
+	familyID := c.Param("familyId")
+	userID := c.GetString("user_id")
+
+	if err := h.service.DeleteFamily(c.Request.Context(), familyID, userID); err != nil {
+		if err.Error() == "only admins can delete a family" {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) leaveFamily(c *gin.Context) {
+	familyID := c.Param("familyId")
+	userID := c.GetString("user_id")
+
+	if err := h.service.LeaveFamily(c.Request.Context(), familyID, userID); err != nil {
+		if err.Error() == "cannot leave: you are the only admin" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) listMembers(c *gin.Context) {

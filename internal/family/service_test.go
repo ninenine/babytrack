@@ -18,6 +18,7 @@ type mockRepository struct {
 	createChildErr  error
 	updateChildErr  error
 	deleteChildErr  error
+	deleteFamilyErr error
 }
 
 func newMockRepository() *mockRepository {
@@ -47,6 +48,15 @@ func (m *mockRepository) CreateFamily(ctx context.Context, family *Family) error
 
 func (m *mockRepository) UpdateFamily(ctx context.Context, family *Family) error {
 	m.families[family.ID] = family
+	return nil
+}
+
+func (m *mockRepository) DeleteFamily(ctx context.Context, id string) error {
+	if m.deleteFamilyErr != nil {
+		return m.deleteFamilyErr
+	}
+	delete(m.families, id)
+	delete(m.members, id)
 	return nil
 }
 
@@ -651,5 +661,335 @@ func TestService_GetFamilyMembers_Empty(t *testing.T) {
 
 	if members == nil {
 		t.Error("GetFamilyMembers() should return empty slice, not nil")
+	}
+}
+
+func TestService_UpdateFamily(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family first
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Old Name",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+
+	// Update it
+	req := &CreateFamilyRequest{
+		Name: "New Name",
+	}
+
+	updated, err := svc.UpdateFamily(context.Background(), family.ID, req)
+	if err != nil {
+		t.Fatalf("UpdateFamily() error = %v", err)
+	}
+
+	if updated.Name != "New Name" {
+		t.Errorf("UpdateFamily() Name = %v, want New Name", updated.Name)
+	}
+
+	// Verify it was persisted
+	if repo.families[family.ID].Name != "New Name" {
+		t.Error("UpdateFamily() should persist the updated name")
+	}
+}
+
+func TestService_UpdateFamily_NotFound(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	req := &CreateFamilyRequest{
+		Name: "New Name",
+	}
+
+	_, err := svc.UpdateFamily(context.Background(), "non-existent", req)
+	if err == nil {
+		t.Error("UpdateFamily() should return error for non-existent family")
+	}
+}
+
+func TestService_DeleteFamily(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with admin user
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+	}
+
+	// Delete it
+	err := svc.DeleteFamily(context.Background(), family.ID, "user-123")
+	if err != nil {
+		t.Fatalf("DeleteFamily() error = %v", err)
+	}
+
+	// Verify it's gone
+	if _, ok := repo.families[family.ID]; ok {
+		t.Error("DeleteFamily() should remove the family")
+	}
+}
+
+func TestService_DeleteFamily_NotAdmin(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with non-admin user
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "member"},
+	}
+
+	// Try to delete as non-admin
+	err := svc.DeleteFamily(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("DeleteFamily() should return error for non-admin user")
+	}
+
+	if err.Error() != "only admins can delete a family" {
+		t.Errorf("DeleteFamily() error = %v, want 'only admins can delete a family'", err)
+	}
+
+	// Verify family still exists
+	if _, ok := repo.families[family.ID]; !ok {
+		t.Error("DeleteFamily() should not remove family for non-admin")
+	}
+}
+
+func TestService_DeleteFamily_NotMember(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family without the user as member
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "other-user", Role: "admin"},
+	}
+
+	// Try to delete as non-member
+	err := svc.DeleteFamily(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("DeleteFamily() should return error for non-member user")
+	}
+}
+
+func TestService_LeaveFamily(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with two admins
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+		{ID: "member-2", FamilyID: family.ID, UserID: "user-456", Role: "admin"},
+	}
+
+	// Leave the family
+	err := svc.LeaveFamily(context.Background(), family.ID, "user-123")
+	if err != nil {
+		t.Fatalf("LeaveFamily() error = %v", err)
+	}
+
+	// Verify user was removed
+	for _, m := range repo.members[family.ID] {
+		if m.UserID == "user-123" {
+			t.Error("LeaveFamily() should remove the user from members")
+		}
+	}
+}
+
+func TestService_LeaveFamily_AsMember(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with one admin and one member
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+		{ID: "member-2", FamilyID: family.ID, UserID: "user-456", Role: "member"},
+	}
+
+	// Member leaves the family
+	err := svc.LeaveFamily(context.Background(), family.ID, "user-456")
+	if err != nil {
+		t.Fatalf("LeaveFamily() error = %v", err)
+	}
+
+	// Verify member was removed
+	if len(repo.members[family.ID]) != 1 {
+		t.Errorf("LeaveFamily() should leave 1 member, got %d", len(repo.members[family.ID]))
+	}
+}
+
+func TestService_LeaveFamily_OnlyAdmin(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with only one admin
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+	}
+
+	// Try to leave as the only admin
+	err := svc.LeaveFamily(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("LeaveFamily() should return error when leaving as only admin")
+	}
+
+	if err.Error() != "cannot leave: you are the only admin" {
+		t.Errorf("LeaveFamily() error = %v, want 'cannot leave: you are the only admin'", err)
+	}
+
+	// Verify user is still a member
+	if len(repo.members[family.ID]) != 1 {
+		t.Error("LeaveFamily() should not remove the only admin")
+	}
+}
+
+func TestService_LeaveFamily_OnlyAdminWithMembers(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with one admin and one member
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+		{ID: "member-2", FamilyID: family.ID, UserID: "user-456", Role: "member"},
+	}
+
+	// Try to leave as the only admin (even though there are other members)
+	err := svc.LeaveFamily(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("LeaveFamily() should return error when leaving as only admin")
+	}
+}
+
+func TestService_LeaveFamily_NotMember(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family without the user as member
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "other-user", Role: "admin"},
+	}
+
+	// Try to leave as non-member
+	err := svc.LeaveFamily(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("LeaveFamily() should return error for non-member user")
+	}
+}
+
+func TestService_GetMemberRole(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family with members
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "user-123", Role: "admin"},
+		{ID: "member-2", FamilyID: family.ID, UserID: "user-456", Role: "member"},
+	}
+
+	// Get admin role
+	role, err := svc.GetMemberRole(context.Background(), family.ID, "user-123")
+	if err != nil {
+		t.Fatalf("GetMemberRole() error = %v", err)
+	}
+
+	if role != "admin" {
+		t.Errorf("GetMemberRole() = %v, want admin", role)
+	}
+
+	// Get member role
+	role, err = svc.GetMemberRole(context.Background(), family.ID, "user-456")
+	if err != nil {
+		t.Fatalf("GetMemberRole() error = %v", err)
+	}
+
+	if role != "member" {
+		t.Errorf("GetMemberRole() = %v, want member", role)
+	}
+}
+
+func TestService_GetMemberRole_NotMember(t *testing.T) {
+	repo := newMockRepository()
+	svc := NewService(repo)
+
+	// Create a family without the user as member
+	family := &Family{
+		ID:        "family-123",
+		Name:      "Test Family",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	repo.families[family.ID] = family
+	repo.members[family.ID] = []FamilyMember{
+		{ID: "member-1", FamilyID: family.ID, UserID: "other-user", Role: "admin"},
+	}
+
+	// Try to get role for non-member
+	_, err := svc.GetMemberRole(context.Background(), family.ID, "user-123")
+	if err == nil {
+		t.Error("GetMemberRole() should return error for non-member user")
 	}
 }
