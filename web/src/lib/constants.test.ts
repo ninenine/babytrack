@@ -15,6 +15,14 @@ describe('API_ENDPOINTS', () => {
       expect(API_ENDPOINTS.FAMILIES.BY_ID('abc123')).toBe('/api/families/abc123')
     })
 
+    it('builds JOIN path correctly', () => {
+      expect(API_ENDPOINTS.FAMILIES.JOIN('family-1')).toBe('/api/families/family-1/join')
+    })
+
+    it('builds MEMBERS path correctly', () => {
+      expect(API_ENDPOINTS.FAMILIES.MEMBERS('family-1')).toBe('/api/families/family-1/members')
+    })
+
     it('builds CHILDREN path correctly', () => {
       expect(API_ENDPOINTS.FAMILIES.CHILDREN('family-1')).toBe('/api/families/family-1/children')
     })
@@ -31,6 +39,10 @@ describe('API_ENDPOINTS', () => {
   })
 
   describe('SLEEP', () => {
+    it('builds BY_ID path correctly', () => {
+      expect(API_ENDPOINTS.SLEEP.BY_ID('sleep-1')).toBe('/api/sleep/sleep-1')
+    })
+
     it('builds END path correctly', () => {
       expect(API_ENDPOINTS.SLEEP.END('sleep-1')).toBe('/api/sleep/sleep-1/end')
     })
@@ -41,6 +53,10 @@ describe('API_ENDPOINTS', () => {
   })
 
   describe('MEDICATIONS', () => {
+    it('builds BY_ID path correctly', () => {
+      expect(API_ENDPOINTS.MEDICATIONS.BY_ID('med-1')).toBe('/api/medications/med-1')
+    })
+
     it('builds LOGS path correctly', () => {
       expect(API_ENDPOINTS.MEDICATIONS.LOGS('med-1')).toBe('/api/medications/med-1/logs')
     })
@@ -51,6 +67,10 @@ describe('API_ENDPOINTS', () => {
   })
 
   describe('VACCINATIONS', () => {
+    it('builds BY_ID path correctly', () => {
+      expect(API_ENDPOINTS.VACCINATIONS.BY_ID('vax-1')).toBe('/api/vaccinations/vax-1')
+    })
+
     it('builds GENERATE path correctly', () => {
       expect(API_ENDPOINTS.VACCINATIONS.GENERATE('child-1')).toBe('/api/vaccinations/generate/child-1')
     })
@@ -58,15 +78,37 @@ describe('API_ENDPOINTS', () => {
     it('builds RECORD path correctly', () => {
       expect(API_ENDPOINTS.VACCINATIONS.RECORD('vax-1')).toBe('/api/vaccinations/vax-1/record')
     })
+
+    it('builds UPCOMING path correctly', () => {
+      expect(API_ENDPOINTS.VACCINATIONS.UPCOMING('child-1')).toBe('/api/vaccinations/upcoming/child-1')
+    })
   })
 
   describe('APPOINTMENTS', () => {
+    it('builds BY_ID path correctly', () => {
+      expect(API_ENDPOINTS.APPOINTMENTS.BY_ID('apt-1')).toBe('/api/appointments/apt-1')
+    })
+
     it('builds COMPLETE path correctly', () => {
       expect(API_ENDPOINTS.APPOINTMENTS.COMPLETE('apt-1')).toBe('/api/appointments/apt-1/complete')
     })
 
     it('builds CANCEL path correctly', () => {
       expect(API_ENDPOINTS.APPOINTMENTS.CANCEL('apt-1')).toBe('/api/appointments/apt-1/cancel')
+    })
+
+    it('builds UPCOMING path correctly', () => {
+      expect(API_ENDPOINTS.APPOINTMENTS.UPCOMING('child-1')).toBe('/api/appointments/upcoming/child-1')
+    })
+  })
+
+  describe('NOTES', () => {
+    it('builds BY_ID path correctly', () => {
+      expect(API_ENDPOINTS.NOTES.BY_ID('note-1')).toBe('/api/notes/note-1')
+    })
+
+    it('builds PIN path correctly', () => {
+      expect(API_ENDPOINTS.NOTES.PIN('note-1')).toBe('/api/notes/note-1/pin')
     })
   })
 })
