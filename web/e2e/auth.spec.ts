@@ -8,20 +8,34 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL('/login')
   })
 
-  test('should display login page with Google sign-in', async ({ page }) => {
+  test('should display login page with branding', async ({ page }) => {
     await page.goto('/login')
 
-    // Check for login page elements
     await expect(page.locator('text=BabyTrack')).toBeVisible()
+    await expect(
+      page.locator("text=Track your baby's feeding, sleep, and more")
+    ).toBeVisible()
+  })
+
+  test('should display Google sign-in button', async ({ page }) => {
+    await page.goto('/login')
+
     await expect(page.locator('text=Continue with Google')).toBeVisible()
   })
 
   test('should redirect protected routes to login', async ({ page }) => {
-    // Try to access protected route
-    await page.goto('/feeding')
+    const protectedRoutes = [
+      '/feeding',
+      '/sleep',
+      '/medications',
+      '/notes',
+      '/settings',
+    ]
 
-    // Should redirect to login
-    await expect(page).toHaveURL('/login')
+    for (const route of protectedRoutes) {
+      await page.goto(route)
+      await expect(page).toHaveURL('/login')
+    }
   })
 
   test('should redirect to onboarding if authenticated but no family', async ({
@@ -46,5 +60,36 @@ test.describe('Authentication', () => {
 
     // Should redirect to onboarding
     await expect(page).toHaveURL('/onboarding')
+  })
+
+  test('should display onboarding page for new users', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'session-storage',
+        JSON.stringify({
+          state: {
+            user: { id: 'user-1', email: 'test@example.com', name: 'Test' },
+            token: 'test-token',
+            isAuthenticated: true,
+          },
+          version: 0,
+        })
+      )
+    })
+
+    await page.goto('/onboarding')
+
+    // Should show onboarding content
+    await expect(page).toHaveURL('/onboarding')
+  })
+
+  test('should preserve login page on direct access when not authenticated', async ({
+    page,
+  }) => {
+    await page.goto('/login')
+
+    // Should stay on login page
+    await expect(page).toHaveURL('/login')
+    await expect(page.locator('text=Continue with Google')).toBeVisible()
   })
 })
