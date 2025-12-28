@@ -14,6 +14,8 @@ export default defineConfig({
   build: {
     outDir: '../internal/app/web_dist',
     emptyOutDir: true,
+    // Target modern Safari for optimal JS parsing
+    target: 'safari16',
     rollupOptions: {
       output: {
         manualChunks: {
