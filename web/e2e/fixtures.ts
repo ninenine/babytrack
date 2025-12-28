@@ -18,6 +18,9 @@ export const test = base.extend({
       if (url.includes('/sync/')) {
         return route.fulfill({ status: 200, json: { events: [], synced: 0 } })
       }
+      if (url.includes('/version')) {
+        return route.fulfill({ status: 200, json: { version: 'test' } })
+      }
       // Default: return empty array for list endpoints
       return route.fulfill({ status: 200, json: [] })
     })

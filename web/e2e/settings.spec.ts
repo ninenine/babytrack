@@ -41,9 +41,9 @@ test.describe('Settings Page', () => {
   test('should display about card', async ({ page }) => {
     await page.goto('/settings')
 
-    // Scroll to about section
-    await page.locator('text=BabyTrack v1.0.0').scrollIntoViewIfNeeded()
-    await expect(page.locator('text=BabyTrack v1.0.0')).toBeVisible()
+    // Scroll to about section - version is dynamic from API (mocked as 'test')
+    await page.locator('text=BabyTrack test').scrollIntoViewIfNeeded()
+    await expect(page.locator('text=BabyTrack test')).toBeVisible()
   })
 
   test('should have dark mode toggle', async ({ page }) => {
