@@ -25,13 +25,13 @@ const (
 )
 
 type Event struct {
-	ID        string      `json:"id"`
-	Type      EventType   `json:"type"`
-	Action    string      `json:"action"` // create, update, delete
-	EntityID  string      `json:"entity_id"`
-	Data      interface{} `json:"data,omitempty"`
-	Timestamp time.Time   `json:"timestamp"`
-	ClientID  string      `json:"client_id"`
+	ID        string    `json:"id"`
+	Type      EventType `json:"type"`
+	Action    string    `json:"action"` // create, update, delete
+	EntityID  string    `json:"entity_id"`
+	Data      any       `json:"data,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+	ClientID  string    `json:"client_id"`
 }
 
 type PushRequest struct {
