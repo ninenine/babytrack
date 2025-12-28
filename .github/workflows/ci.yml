@@ -48,8 +48,8 @@ jobs:
       - name: Install web dependencies
         run: cd web && pnpm install
 
-      - name: Build web
-        run: cd web && pnpm build
+      - name: Create web_dist for Go embed
+        run: mkdir -p internal/app/web_dist && touch internal/app/web_dist/.gitkeep
 
       - name: Lint Go
         uses: golangci/golangci-lint-action@v9
