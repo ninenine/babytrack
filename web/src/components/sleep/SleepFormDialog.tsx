@@ -102,7 +102,7 @@ export function SleepFormDialog({ open, onOpenChange, sleep }: SleepFormDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Sleep Record</DialogTitle>
           <DialogDescription>
