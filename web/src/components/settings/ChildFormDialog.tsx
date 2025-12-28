@@ -31,6 +31,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useFamilyStore, type Child } from '@/stores/family.store'
+import { useSessionStore } from '@/stores/session.store'
+import { API_ENDPOINTS } from '@/lib/constants'
 
 const childFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -63,7 +65,8 @@ function childToFormValues(child: Child): ChildFormValues {
 }
 
 export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogProps) {
-  const { addChild, updateChild } = useFamilyStore()
+  const { currentFamily, addChild, updateChild } = useFamilyStore()
+  const { token } = useSessionStore()
   const isEditing = !!child
 
   const form = useForm<ChildFormValues>({
@@ -82,20 +85,68 @@ export function ChildFormDialog({ open, onOpenChange, child }: ChildFormDialogPr
   }, [child, open, form])
 
   const onSubmit = async (values: ChildFormValues) => {
+    if (!currentFamily) return
+
     try {
-      const childData: Child = {
-        id: child?.id || crypto.randomUUID(),
+      const payload = {
         name: values.name,
-        dateOfBirth: toAPIDateTime(values.dateOfBirth),
+        date_of_birth: toAPIDateTime(values.dateOfBirth),
         gender: values.gender || undefined,
-        avatarUrl: child?.avatarUrl,
       }
 
-      if (isEditing) {
-        updateChild(childData)
+      if (isEditing && child) {
+        // Update existing child
+        const response = await fetch(
+          API_ENDPOINTS.FAMILIES.CHILD_BY_ID(currentFamily.id, child.id),
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to update child')
+        }
+
+        const updatedChild = await response.json()
+        updateChild({
+          id: updatedChild.id,
+          name: updatedChild.name,
+          dateOfBirth: updatedChild.date_of_birth,
+          gender: updatedChild.gender,
+          avatarUrl: updatedChild.avatar_url,
+        })
         toast.success('Child updated')
       } else {
-        addChild(childData)
+        // Add new child
+        const response = await fetch(
+          API_ENDPOINTS.FAMILIES.CHILDREN(currentFamily.id),
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to add child')
+        }
+
+        const newChild = await response.json()
+        addChild({
+          id: newChild.id,
+          name: newChild.name,
+          dateOfBirth: newChild.date_of_birth,
+          gender: newChild.gender,
+          avatarUrl: newChild.avatar_url,
+        })
         toast.success('Child added')
       }
       onOpenChange(false)

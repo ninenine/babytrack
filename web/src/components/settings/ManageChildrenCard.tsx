@@ -16,6 +16,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useFamilyStore, type Child } from '@/stores/family.store'
+import { useSessionStore } from '@/stores/session.store'
+import { API_ENDPOINTS } from '@/lib/constants'
+import { toast } from 'sonner'
 import { ChildFormDialog } from './ChildFormDialog'
 import {
   differenceInYears,
@@ -47,9 +50,11 @@ function formatAge(dateOfBirth: string): string {
 
 export function ManageChildrenCard() {
   const { currentFamily, removeChild } = useFamilyStore()
+  const { token } = useSessionStore()
   const [childFormOpen, setChildFormOpen] = useState(false)
   const [editingChild, setEditingChild] = useState<Child | null>(null)
   const [deletingChild, setDeletingChild] = useState<Child | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const children = currentFamily?.children || []
 
@@ -63,10 +68,32 @@ export function ManageChildrenCard() {
     setChildFormOpen(true)
   }
 
-  const handleDelete = () => {
-    if (deletingChild) {
+  const handleDelete = async () => {
+    if (!deletingChild || !currentFamily) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(
+        API_ENDPOINTS.FAMILIES.CHILD_BY_ID(currentFamily.id, deletingChild.id),
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to delete child')
+      }
+
       removeChild(deletingChild.id)
       setDeletingChild(null)
+      toast.success('Child removed')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete child')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -150,7 +177,7 @@ export function ManageChildrenCard() {
         child={editingChild}
       />
 
-      <AlertDialog open={!!deletingChild} onOpenChange={() => setDeletingChild(null)}>
+      <AlertDialog open={!!deletingChild} onOpenChange={() => !isDeleting && setDeletingChild(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Child</AlertDialogTitle>
@@ -160,12 +187,13 @@ export function ManageChildrenCard() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              {isDeleting ? 'Removing...' : 'Remove'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
