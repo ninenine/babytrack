@@ -184,7 +184,7 @@ describe('ApiClient', () => {
   })
 
   describe('token refresh', () => {
-    it.skip('should attempt refresh on 401 and update session', async () => {
+    it('should attempt refresh on 401 and update session', async () => {
       useSessionStore.setState({
         user: { id: '1', email: 'test@test.com', name: 'Test' },
         token: 'old-token',

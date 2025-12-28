@@ -73,7 +73,8 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(API_ENDPOINTS.AUTH.REFRESH, {
+      const refreshUrl = this.buildUrl(API_ENDPOINTS.AUTH.REFRESH)
+      const response = await fetch(refreshUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
