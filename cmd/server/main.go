@@ -11,7 +11,11 @@ import (
 	"github.com/ninenine/babytrack/internal/db"
 )
 
+// version is set at build time via ldflags
+var version = "dev"
+
 func main() {
+	app.SetVersion(version)
 	configPath := flag.String("config", "./configs/config.yaml", "path to config file")
 	migrateOnly := flag.Bool("migrate", false, "run migrations and exit")
 	flag.Parse()

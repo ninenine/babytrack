@@ -1,5 +1,7 @@
 // API endpoints
 export const API_ENDPOINTS = {
+  // System
+  VERSION: '/api/version',
   // Auth
   AUTH: {
     GOOGLE: '/api/auth/google',

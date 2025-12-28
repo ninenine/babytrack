@@ -10,6 +10,11 @@ func (s *Server) setupRoutes() {
 			c.JSON(200, gin.H{"status": "ok"})
 		})
 
+		// Version endpoint
+		api.GET("/version", func(c *gin.Context) {
+			c.JSON(200, gin.H{"version": GetVersion()})
+		})
+
 		// Auth routes (public)
 		authGroup := api.Group("/auth")
 		s.authHandler.RegisterRoutes(authGroup)
