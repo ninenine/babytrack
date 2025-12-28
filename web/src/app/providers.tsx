@@ -9,6 +9,19 @@ function SyncProvider({ children }: { children: React.ReactNode }) {
   const isOnline = useOnline()
   const { syncPendingEvents, refreshPendingCount } = useSync()
 
+  // Request persistent storage (prevents iOS Safari from evicting IndexedDB)
+  useEffect(() => {
+    async function requestPersistence() {
+      if (navigator.storage?.persist) {
+        const isPersisted = await navigator.storage.persisted()
+        if (!isPersisted) {
+          await navigator.storage.persist()
+        }
+      }
+    }
+    requestPersistence().catch(console.error)
+  }, [])
+
   // Sync when coming back online
   useEffect(() => {
     if (isOnline) {
