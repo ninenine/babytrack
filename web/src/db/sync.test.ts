@@ -320,8 +320,10 @@ describe('Sync', () => {
       await db.medicationLogs.add({
         id: 'log-1',
         medicationId: 'med-1',
+        childId: 'child-1',
         givenAt: new Date(),
         givenBy: 'user-1',
+        dosage: '5ml',
         pendingSync: true,
       })
 

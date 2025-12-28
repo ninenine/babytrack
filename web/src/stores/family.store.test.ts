@@ -121,9 +121,9 @@ describe('useFamilyStore', () => {
 
       const state = useFamilyStore.getState()
       // Current family should have new child
-      expect(state.families[0].children).toHaveLength(3)
+      expect(state.families[0]!.children).toHaveLength(3)
       // Other family should be unchanged
-      expect(state.families[1].children).toHaveLength(0)
+      expect(state.families[1]!.children).toHaveLength(0)
     })
 
     it('should not add child if no current family', () => {
@@ -150,7 +150,7 @@ describe('useFamilyStore', () => {
 
       const state = useFamilyStore.getState()
       // Current family should have updated child
-      expect(state.families[0].children[0].name).toBe('Updated Emma')
+      expect(state.families[0]!.children[0]!.name).toBe('Updated Emma')
       // Other family should be unchanged
       expect(state.families[1]).toEqual(mockFamily2)
     })
@@ -165,7 +165,7 @@ describe('useFamilyStore', () => {
       useFamilyStore.getState().updateChild(updatedChild)
 
       const state = useFamilyStore.getState()
-      expect(state.currentFamily?.children[0].name).toBe('Emma Updated')
+      expect(state.currentFamily?.children[0]?.name).toBe('Emma Updated')
     })
 
     it('should update current child if it matches', () => {
@@ -207,7 +207,7 @@ describe('useFamilyStore', () => {
 
       const state = useFamilyStore.getState()
       // Current family should have child removed
-      expect(state.families[0].children).toHaveLength(1)
+      expect(state.families[0]!.children).toHaveLength(1)
       // Other family should be unchanged
       expect(state.families[1]).toEqual(mockFamily2)
     })
@@ -218,7 +218,7 @@ describe('useFamilyStore', () => {
 
       const state = useFamilyStore.getState()
       expect(state.currentFamily?.children).toHaveLength(1)
-      expect(state.currentFamily?.children[0].id).toBe('child-1')
+      expect(state.currentFamily?.children[0]?.id).toBe('child-1')
     })
 
     it('should select next child if current child removed', () => {
