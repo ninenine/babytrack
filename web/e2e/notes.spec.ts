@@ -41,11 +41,12 @@ test.describe('Notes Page', () => {
     await expect(searchInput).toHaveValue('test search')
   })
 
-  test('should be accessible from More dropdown', async ({ page }) => {
+  test('should be accessible from More menu', async ({ page }) => {
     await page.goto('/')
 
     await page.click('text=More')
-    await page.getByRole('menuitem', { name: 'Notes' }).click()
+    // Wait for menu/sheet to open, then click Notes
+    await page.getByText('Notes', { exact: true }).click()
 
     await expect(page).toHaveURL('/notes')
     await expect(page.locator('h1:has-text("Notes")')).toBeVisible()
