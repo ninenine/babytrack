@@ -100,6 +100,10 @@ describe('Pending Events', () => {
       const updated = await getPendingEvents()
       expect(updated[0]?.retryCount).toBe(1)
     })
+
+    it('should not throw when event does not exist', async () => {
+      await expect(incrementRetryCount('non-existent-id')).resolves.not.toThrow()
+    })
   })
 
   describe('clearPendingEvents', () => {
