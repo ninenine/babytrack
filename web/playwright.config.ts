@@ -8,16 +8,16 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['list'],
-    [
-      'monocart-reporter',
-      {
-        name: 'BabyTrack E2E Report',
-        outputFile: './test-results/report.html',
-        coverage: {
-          reports: ['v8', 'console-summary'],
-        },
-      },
-    ],
+    // [
+    //   'monocart-reporter',
+    //   {
+    //     name: 'BabyTrack E2E Report',
+    //     outputFile: './test-results/report.html',
+    //     coverage: {
+    //       reports: ['v8', 'console-summary'],
+    //     },
+    //   },
+    // ],
   ],
   use: {
     baseURL: 'http://localhost:5173',
