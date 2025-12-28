@@ -20,7 +20,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { useQueryClient } from '@tanstack/react-query'
 import { db } from '@/db/dexie'
 import { toast } from 'sonner'
-import { ManageChildrenCard, InviteMemberCard } from '@/components/settings'
+import { ManageChildrenCard, InviteMemberCard, ManageFamilyCard } from '@/components/settings'
 import { API_ENDPOINTS } from '@/lib/constants'
 
 export function SettingsPage() {
@@ -94,6 +94,9 @@ export function SettingsPage() {
 
       {/* Family Members */}
       <InviteMemberCard />
+
+      {/* Manage Family */}
+      <ManageFamilyCard />
 
       {/* Account */}
       <Card>

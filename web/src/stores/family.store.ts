@@ -22,6 +22,8 @@ interface FamilyState {
   setCurrentFamily: (family: Family) => void
   setCurrentChild: (child: Child) => void
   setFamilies: (families: Family[]) => void
+  updateFamily: (name: string) => void
+  removeFamily: (familyId: string) => void
   addChild: (child: Child) => void
   updateChild: (child: Child) => void
   removeChild: (childId: string) => void
@@ -51,6 +53,30 @@ export const useFamilyStore = create<FamilyState>()(
           currentFamily: families[0] || null,
           currentChild: families[0]?.children[0] || null,
         }),
+
+      updateFamily: (name) => {
+        const family = get().currentFamily
+        if (!family) return
+
+        const updatedFamily = { ...family, name }
+
+        set({
+          currentFamily: updatedFamily,
+          families: get().families.map((f) =>
+            f.id === family.id ? updatedFamily : f
+          ),
+        })
+      },
+
+      removeFamily: (familyId) => {
+        const remainingFamilies = get().families.filter((f) => f.id !== familyId)
+
+        set({
+          families: remainingFamilies,
+          currentFamily: remainingFamilies[0] || null,
+          currentChild: remainingFamilies[0]?.children[0] || null,
+        })
+      },
 
       addChild: (child) => {
         const family = get().currentFamily
