@@ -49,7 +49,7 @@ jobs:
         run: cd web && pnpm install
 
       - name: Lint Go
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v2.1.6
 
