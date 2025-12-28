@@ -76,7 +76,7 @@ func (r *repository) List(ctx context.Context, filter *FeedingFilter) ([]Feeding
 		FROM feedings
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	args := []any{}
 	argIndex := 1
 
 	if filter.ChildID != "" {

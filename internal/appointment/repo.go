@@ -68,7 +68,7 @@ func (r *repository) List(ctx context.Context, filter *AppointmentFilter) ([]App
 		FROM appointments
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	args := []any{}
 	argIndex := 1
 
 	if filter.ChildID != "" {

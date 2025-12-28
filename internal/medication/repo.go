@@ -71,7 +71,7 @@ func (r *repository) List(ctx context.Context, filter *MedicationFilter) ([]Medi
 		FROM medications
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	args := []any{}
 	argIndex := 1
 
 	if filter.ChildID != "" {
