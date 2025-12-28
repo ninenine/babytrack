@@ -28,9 +28,12 @@ export async function removePendingEvent(id: string): Promise<void> {
 }
 
 export async function incrementRetryCount(id: string): Promise<void> {
-  await db.pendingEvents.update(id, {
-    retryCount: (await db.pendingEvents.get(id))?.retryCount ?? 0 + 1,
-  })
+  const event = await db.pendingEvents.get(id)
+  if (event) {
+    await db.pendingEvents.update(id, {
+      retryCount: event.retryCount + 1,
+    })
+  }
 }
 
 export async function clearPendingEvents(): Promise<void> {
