@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -59,13 +59,60 @@ jobs:
       - name: Run Go tests
         run: go test -race -coverprofile=coverage.out ./...
 
-      - name: Run web tests
+      - name: Run web unit tests
         run: cd web && pnpm test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install web dependencies
+        run: cd web && pnpm install
+
+      - name: Install Playwright browsers
+        run: cd web && npx playwright install --with-deps chromium webkit
+
+      - name: Run E2E tests
+        run: cd web && pnpm test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: web/test-results/
+          retention-days: 7
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, e2e]
 
     steps:
       - name: Checkout code
@@ -74,7 +121,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
