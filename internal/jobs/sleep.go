@@ -198,5 +198,5 @@ func (j *SleepAnalyticsJob) runDailySummary(ctx context.Context, now time.Time) 
 		}
 	}
 
-	log.Printf("[SleepAnalyticsJob] Daily summary complete. Analyzed %d children", len(childData))
+	log.Printf("[SleepAnalyticsJob] Daily summary complete. Analysed %d children", len(childData))
 }

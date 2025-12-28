@@ -52,7 +52,7 @@ type Server struct {
 func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
-	// Initialize auth components
+	// Initialise auth components
 	googleClient := auth.NewGoogleOAuthClient(&auth.GoogleOAuthConfig{
 		ClientID:     cfg.Auth.GoogleClientID,
 		ClientSecret: cfg.Auth.GoogleClientSecret,
@@ -65,51 +65,51 @@ func NewServer(cfg *Config, database *db.DB) (*Server, error) {
 	authService := auth.NewService(authRepo, googleClient, jwtManager)
 	authHandler := auth.NewHandler(authService)
 
-	// Initialize family components
+	// Initialise family components
 	familyRepo := family.NewRepository(database.DB)
 	familyService := family.NewService(familyRepo)
 	familyHandler := family.NewHandler(familyService)
 
-	// Initialize feeding components
+	// Initialise feeding components
 	feedingRepo := feeding.NewRepository(database.DB)
 	feedingService := feeding.NewService(feedingRepo)
 	feedingHandler := feeding.NewHandler(feedingService)
 
-	// Initialize sleep components
+	// Initialise sleep components
 	sleepRepo := sleep.NewRepository(database.DB)
 	sleepService := sleep.NewService(sleepRepo)
 	sleepHandler := sleep.NewHandler(sleepService)
 
-	// Initialize medication components
+	// Initialise medication components
 	medicationRepo := medication.NewRepository(database.DB)
 	medicationService := medication.NewService(medicationRepo)
 	medicationHandler := medication.NewHandler(medicationService)
 
-	// Initialize notes components
+	// Initialise notes components
 	notesRepo := notes.NewRepository(database.DB)
 	notesService := notes.NewService(notesRepo)
 	notesHandler := notes.NewHandler(notesService)
 
-	// Initialize vaccination components
+	// Initialise vaccination components
 	vaccinationRepo := vaccination.NewRepository(database.DB)
 	vaccinationService := vaccination.NewService(vaccinationRepo)
 	vaccinationHandler := vaccination.NewHandler(vaccinationService)
 
-	// Initialize appointment components
+	// Initialise appointment components
 	appointmentRepo := appointment.NewRepository(database.DB)
 	appointmentService := appointment.NewService(appointmentRepo)
 	appointmentHandler := appointment.NewHandler(appointmentService)
 
-	// Initialize sync components
+	// Initialise sync components
 	syncService := sync.NewService(feedingService, sleepService, medicationService, notesService)
 	syncHandler := sync.NewHandler(syncService)
 
-	// Initialize notification hub
+	// Initialise notification hub
 	notificationHub := notifications.NewHub()
 	go notificationHub.Run()
 	notificationsHandler := notifications.NewHandler(notificationHub)
 
-	// Initialize scheduler and jobs
+	// Initialise scheduler and jobs
 	scheduler := jobs.NewScheduler()
 	scheduler.Register(jobs.NewMedicationReminderJob(medicationService, notificationHub))
 	scheduler.Register(jobs.NewVaccinationReminderJob(vaccinationService, notificationHub))

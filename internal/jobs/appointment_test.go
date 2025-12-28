@@ -110,7 +110,7 @@ func TestAppointmentReminderJob_Run_StartingSoon(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute), // 30 minutes from now
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -152,7 +152,7 @@ func TestAppointmentReminderJob_Run_Today(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(5 * time.Hour), // 5 hours from now (today)
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -195,7 +195,7 @@ func TestAppointmentReminderJob_Run_Tomorrow(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: tomorrow,
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -237,7 +237,7 @@ func TestAppointmentReminderJob_Run_TooFarAway(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Hour), // More than 24 hours away
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -277,7 +277,7 @@ func TestAppointmentReminderJob_Run_SkipsCompleted(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   true,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -317,7 +317,7 @@ func TestAppointmentReminderJob_Run_SkipsCancelled(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   false,
-			Canceled:    true,
+			Cancelled:   true,
 		},
 	}
 
@@ -357,7 +357,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(30 * time.Minute),
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 		{
 			ID:          "apt-2",
@@ -365,7 +365,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(2 * time.Hour),
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 		{
 			ID:          "apt-3",
@@ -373,7 +373,7 @@ func TestAppointmentReminderJob_Run_MultipleAppointments(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(1 * time.Hour),
 			Completed:   true,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 
@@ -422,7 +422,7 @@ func TestAppointmentReminderJob_Run_PastAppointment(t *testing.T) {
 			ChildID:     "child-1",
 			ScheduledAt: now.Add(-1 * time.Hour), // In the past
 			Completed:   false,
-			Canceled:    false,
+			Cancelled:   false,
 		},
 	}
 

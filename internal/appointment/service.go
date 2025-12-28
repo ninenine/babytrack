@@ -46,7 +46,7 @@ func (s *service) Create(ctx context.Context, req *CreateAppointmentRequest) (*A
 		Duration:    duration,
 		Notes:       req.Notes,
 		Completed:   false,
-		Canceled:    false,
+		Cancelled:   false,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
@@ -123,7 +123,7 @@ func (s *service) Cancel(ctx context.Context, id string) error {
 		return fmt.Errorf("appointment not found")
 	}
 
-	apt.Canceled = true
+	apt.Cancelled = true
 	apt.UpdatedAt = time.Now()
 
 	if err := s.repo.Update(ctx, apt); err != nil {
