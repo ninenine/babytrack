@@ -112,7 +112,7 @@ jobs:
         run: cd web && pnpm test:e2e
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -167,7 +167,7 @@ jobs:
         run: CGO_ENABLED=0 go build -o babytrack ./cmd/server
 
       - name: Upload binary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: babytrack-linux-amd64
           path: babytrack
